@@ -43,11 +43,22 @@
     </div>
   </div>
 
+  <div class="chart-panel">
+    <h3>BTC Price Evolution</h3>
+    <div class="chart-container">
+      <canvas baseChart
+              [data]="lineChartData"
+              [options]="lineChartOptions"
+              type="line">
+      </canvas>
+    </div>
+  </div>
+
   <div class="info-panel">
     <h3>Information</h3>
     <p><strong>Last Update:</strong> {{ botStatus.lastUpdate | date:'medium' }}</p>
     <p class="note">
-      Note: This is a simulated dashboard. Connect to your backend API for real-time data.
+      Real-time data from backend API. Chart shows the last {{maxDataPoints}} price updates.
     </p>
   </div>
 </div>
