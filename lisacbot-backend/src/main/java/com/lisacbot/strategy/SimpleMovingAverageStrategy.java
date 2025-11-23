@@ -1,5 +1,6 @@
-package com.lisacbot;
+package com.lisacbot.strategy;
 
+import com.lisacbot.trading.Signal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

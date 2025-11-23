@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.backtest;
 
 /**
  * Results of a backtest execution.

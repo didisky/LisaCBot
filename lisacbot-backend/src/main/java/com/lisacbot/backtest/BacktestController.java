@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.backtest;
 
 import org.springframework.web.bind.annotation.*;
 
