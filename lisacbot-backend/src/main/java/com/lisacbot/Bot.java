@@ -20,6 +20,8 @@ public class Bot {
 
     private double balance = 1000.0;
     private double holdings = 0.0;
+    private double lastPrice = 0.0;
+    private boolean running = false;
 
     public Bot(PriceService priceService, TradingStrategy strategy) {
         this.priceService = priceService;
@@ -31,6 +33,7 @@ public class Bot {
         log.info("LisaCBot started");
         log.info("Starting balance: ${}", balance);
         log.info("Checking prices every {} seconds", pollInterval);
+        running = true;
     }
 
     /**
@@ -42,6 +45,7 @@ public class Bot {
     public void tick() {
         try {
             double price = priceService.getBitcoinPrice();
+            lastPrice = price;
             log.info("BTC price: ${}", String.format("%.2f", price));
 
             Signal signal = strategy.analyze(price);
@@ -80,5 +84,15 @@ public class Bot {
 
         double totalValue = balance + (holdings * price);
         log.info("Portfolio value: ${}", String.format("%.2f", totalValue));
+    }
+
+    /**
+     * Gets the current status of the bot.
+     *
+     * @return BotStatus object containing current state
+     */
+    public BotStatus getBotStatus() {
+        double totalValue = balance + (holdings * lastPrice);
+        return new BotStatus(running, balance, holdings, lastPrice, totalValue);
     }
 }
