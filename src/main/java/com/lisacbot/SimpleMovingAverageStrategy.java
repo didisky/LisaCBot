@@ -2,8 +2,6 @@ package com.lisacbot;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
 import java.util.LinkedList;
 import java.util.Queue;
@@ -13,16 +11,16 @@ import java.util.Queue;
  * - BUY when price crosses above the moving average
  * - SELL when price crosses below the moving average
  */
-@Component
 public class SimpleMovingAverageStrategy implements TradingStrategy {
     private static final Logger log = LoggerFactory.getLogger(SimpleMovingAverageStrategy.class);
 
     private final Queue<Double> priceHistory = new LinkedList<>();
-
-    @Value("${bot.strategy.sma.period}")
-    private int period;
-
+    private final int period;
     private Double lastAverage = null;
+
+    public SimpleMovingAverageStrategy(int period) {
+        this.period = period;
+    }
 
     /**
      * Analyzes price using Simple Moving Average crossover.
