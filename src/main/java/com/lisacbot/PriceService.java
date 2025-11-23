@@ -2,6 +2,7 @@ package com.lisacbot;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -12,11 +13,11 @@ public class PriceService {
     private static final Logger log = LoggerFactory.getLogger(PriceService.class);
 
     private final RestClient restClient;
-    private static final String COINGECKO_API =
-        "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd";
+    private final String apiUrl;
 
-    public PriceService() {
+    public PriceService(@Value("${bot.price.api.url}") String apiUrl) {
         this.restClient = RestClient.create();
+        this.apiUrl = apiUrl;
     }
 
     /**
@@ -30,7 +31,7 @@ public class PriceService {
         log.info("Fetching BTC price from CoinGecko");
 
         Map<String, Map<String, Number>> response = restClient.get()
-                .uri(COINGECKO_API)
+                .uri(apiUrl)
                 .retrieve()
                 .body(Map.class);
 
