@@ -1,5 +1,7 @@
 package com.lisacbot;
 
+import com.lisacbot.trading.Bot;
+import com.lisacbot.trading.BotStatus;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;

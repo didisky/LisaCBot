@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.trading;
 
 /**
  * Data Transfer Object representing the current status of the trading bot.
