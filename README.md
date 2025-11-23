@@ -1,6 +1,6 @@
 # LisaCBot
 
-A cryptocurrency trading bot built with Spring Boot 3.4 and Java 21 that automatically trades Bitcoin based on configurable strategies.
+A cryptocurrency trading bot with a Spring Boot 3.4 backend and Angular frontend that automatically trades Bitcoin based on configurable strategies.
 
 ## Overview
 
@@ -9,16 +9,26 @@ LisaCBot is an automated trading bot that:
 - Analyzes price trends using trading strategies (currently Simple Moving Average)
 - Executes buy/sell decisions automatically
 - Tracks portfolio value in real-time
+- Provides backtesting functionality to evaluate strategies
+- Includes a web dashboard for monitoring and configuration
 
 The bot uses an "all-in" approach, holding either 100% USD or 100% BTC at any given time.
 
 ## Features
 
+### Backend (Spring Boot)
 - **Scheduled Price Monitoring**: Configurable polling interval for price checks
 - **Strategy-Based Trading**: Pluggable trading strategy interface
 - **Simple Moving Average (SMA)**: Built-in SMA crossover strategy implementation
 - **Portfolio Tracking**: Real-time logging of balance, holdings, and total portfolio value
-- **Spring Boot**: Modern Java framework with dependency injection and scheduling
+- **Backtesting**: Test strategies against historical data
+- **REST API**: Endpoints for status and backtesting
+
+### Frontend (Angular)
+- **Dashboard**: Real-time bot status monitoring
+- **Backtest Interface**: Run backtests with custom parameters
+- **Results Visualization**: Performance cards, charts, and detailed metrics
+- **Execution Logs**: View backtest execution in real-time
 
 ## Architecture
 
@@ -44,8 +54,14 @@ The bot uses an "all-in" approach, holding either 100% USD or 100% BTC at any gi
 
 ## Requirements
 
+### Backend
 - Java 21
 - Maven 3.6+
+
+### Frontend
+- Node.js 22+
+- npm 10+
+- Angular CLI
 
 ## Installation
 
@@ -54,6 +70,14 @@ Clone the repository:
 ```bash
 git clone <repository-url>
 cd LisaCBot
+```
+
+### Install Frontend Dependencies
+
+```bash
+cd lisacbot-frontend
+npm install
+cd ..
 ```
 
 ## Configuration
@@ -77,31 +101,72 @@ You can override any property using environment variables:
 BOT_POLL_INTERVAL_SECONDS=10 mvn spring-boot:run
 ```
 
-## Running the Bot
+## Running the Application
 
-### Compile
+### Quick Start (macOS)
+
+Use the provided startup scripts to launch both backend and frontend:
 
 ```bash
-mvn compile
+# Launch both backend and frontend
+./start.sh
+
+# Or launch them separately
+./start-backend.sh    # Backend only (Spring Boot on port 8080)
+./start-frontend.sh   # Frontend only (Angular on port 4200)
 ```
 
-### Run Tests
+The scripts will open two new terminal windows - one for the backend and one for the frontend. Simply close these terminal windows to stop the applications.
+
+### Manual Start
+
+#### Backend
 
 ```bash
-mvn test
-```
-
-### Run the Application
-
-```bash
+cd lisacbot-backend
 mvn spring-boot:run
 ```
 
-### Build JAR
+The backend will be available at `http://localhost:8080`
+
+#### Frontend
 
 ```bash
+cd lisacbot-frontend
+ng serve
+```
+
+The frontend will be available at `http://localhost:4200`
+
+### Other Commands
+
+#### Compile Backend
+
+```bash
+cd lisacbot-backend
+mvn compile
+```
+
+#### Run Backend Tests
+
+```bash
+cd lisacbot-backend
+mvn test
+```
+
+#### Build Backend JAR
+
+```bash
+cd lisacbot-backend
 mvn package
 java -jar target/lisacbot-1.0-SNAPSHOT.jar
+```
+
+#### Build Frontend for Production
+
+```bash
+cd lisacbot-frontend
+ng build
 ```
 
 ## Example Output

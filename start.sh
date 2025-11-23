@@ -20,35 +20,16 @@ if [[ "$OSTYPE" != "darwin"* ]]; then
     exit 1
 fi
 
-# Créer le script backend
-cat > /tmp/lisacbot_backend.sh << 'BACKEND_SCRIPT'
-#!/bin/bash
-cd "/Users/jerome/Documents/git_clone/LisaCBot/lisacbot-backend"
-echo "🔧 Backend - Spring Boot (Port 8080)"
-echo "========================================"
-mvn spring-boot:run
-BACKEND_SCRIPT
-chmod +x /tmp/lisacbot_backend.sh
-
-# Créer le script frontend
-cat > /tmp/lisacbot_frontend.sh << 'FRONTEND_SCRIPT'
-#!/bin/bash
-export PATH="/opt/homebrew/opt/node@22/bin:$PATH"
-cd "/Users/jerome/Documents/git_clone/LisaCBot/lisacbot-frontend"
-echo "🎨 Frontend - Angular (Port 4200)"
-echo "======================================"
-ng serve
-FRONTEND_SCRIPT
-chmod +x /tmp/lisacbot_frontend.sh
-
+# Lancer le backend
 echo -e "${BLUE}📦 Lancement du Backend Spring Boot...${NC}"
-osascript -e 'tell application "Terminal" to do script "/tmp/lisacbot_backend.sh"'
+"$SCRIPT_DIR/start-backend.sh"
 
 # Attendre un peu avant de lancer le frontend
 sleep 2
 
+# Lancer le frontend
 echo -e "${GREEN}🎨 Lancement du Frontend Angular...${NC}"
-osascript -e 'tell application "Terminal" to do script "/tmp/lisacbot_frontend.sh"'
+"$SCRIPT_DIR/start-frontend.sh"
 
 echo ""
 echo -e "${GREEN}✅ Les applications sont en cours de démarrage!${NC}"
