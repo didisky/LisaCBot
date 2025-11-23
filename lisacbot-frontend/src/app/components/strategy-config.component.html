@@ -1,0 +1,57 @@
+<div class="config-container">
+  <h2>Trading Strategy Configuration</h2>
+
+  <form (ngSubmit)="onSubmit()" #configForm="ngForm">
+    <div class="form-group">
+      <label for="strategyType">Strategy Type:</label>
+      <select
+        id="strategyType"
+        name="type"
+        [(ngModel)]="config.type"
+        class="form-control">
+        <option *ngFor="let strategy of strategies" [value]="strategy.value">
+          {{ strategy.label }}
+        </option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="smaPeriod">SMA Period:</label>
+      <input
+        type="number"
+        id="smaPeriod"
+        name="smaPeriod"
+        [(ngModel)]="config.smaPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Number of price points to average (2-50)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="pollInterval">Poll Interval (seconds):</label>
+      <input
+        type="number"
+        id="pollInterval"
+        name="pollIntervalSeconds"
+        [(ngModel)]="config.pollIntervalSeconds"
+        min="10"
+        max="300"
+        class="form-control"
+        required>
+      <small>How often to check prices (10-300 seconds)</small>
+    </div>
+
+    <button type="submit" class="btn-primary" [disabled]="!configForm.form.valid">
+      Save Configuration
+    </button>
+  </form>
+
+  <div class="info-box">
+    <h3>Current Configuration</h3>
+    <p><strong>Strategy:</strong> {{ config.type.toUpperCase() }}</p>
+    <p><strong>SMA Period:</strong> {{ config.smaPeriod }} data points</p>
+    <p><strong>Check Interval:</strong> {{ config.pollIntervalSeconds }} seconds</p>
+  </div>
+</div>

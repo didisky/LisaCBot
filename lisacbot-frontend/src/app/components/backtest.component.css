@@ -1,0 +1,159 @@
+.backtest-container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+h2 {
+  color: #333;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid #28a745;
+  padding-bottom: 0.5rem;
+}
+
+.backtest-form {
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+  color: #555;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+small {
+  display: block;
+  margin-top: 0.25rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+.btn-run {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  padding: 0.75rem 2rem;
+  font-size: 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  font-weight: bold;
+}
+
+.btn-run:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-run:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  padding: 1rem;
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  color: #721c24;
+  margin-bottom: 1rem;
+}
+
+.results {
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-top: 2rem;
+}
+
+.results.profit {
+  background: #d4edda;
+  border: 2px solid #28a745;
+}
+
+.results.loss {
+  background: #f8d7da;
+  border: 2px solid #dc3545;
+}
+
+.results h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.result-item {
+  padding: 0.75rem;
+  background: white;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.result-item.highlight {
+  background: #fff3cd;
+  border: 2px solid #ffc107;
+  font-weight: bold;
+  font-size: 1.1rem;
+}
+
+.result-item .label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.result-item .value {
+  color: #333;
+  font-weight: bold;
+}
+
+.performance-summary {
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 4px;
+}
+
+.performance-summary h4 {
+  margin-top: 0;
+  color: #333;
+}
+
+.performance-summary p {
+  margin: 0.5rem 0;
+  font-size: 1.1rem;
+}
+
+.performance-summary .success {
+  color: #28a745;
+}
+
+.performance-summary .warning {
+  color: #dc3545;
+}
+
+.performance-summary .neutral {
+  color: #6c757d;
+}

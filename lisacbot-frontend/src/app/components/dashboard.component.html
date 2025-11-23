@@ -1,0 +1,53 @@
+<div class="dashboard-container">
+  <h2>Bot Status Dashboard</h2>
+
+  <div class="status-header">
+    <div class="status-indicator" [class.active]="botStatus.running">
+      <span class="dot"></span>
+      <span>{{ botStatus.running ? 'Active' : 'Stopped' }}</span>
+    </div>
+    <button (click)="refreshData()" class="btn-refresh">Refresh</button>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-content">
+        <div class="stat-label">Cash Balance</div>
+        <div class="stat-value">${{ botStatus.balance.toFixed(2) }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">₿</div>
+      <div class="stat-content">
+        <div class="stat-label">BTC Holdings</div>
+        <div class="stat-value">{{ botStatus.holdings.toFixed(6) }} BTC</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📈</div>
+      <div class="stat-content">
+        <div class="stat-label">BTC Price</div>
+        <div class="stat-value">${{ botStatus.currentPrice.toFixed(2) }}</div>
+      </div>
+    </div>
+
+    <div class="stat-card highlight">
+      <div class="stat-icon">💼</div>
+      <div class="stat-content">
+        <div class="stat-label">Total Portfolio Value</div>
+        <div class="stat-value">${{ botStatus.totalValue.toFixed(2) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="info-panel">
+    <h3>Information</h3>
+    <p><strong>Last Update:</strong> {{ botStatus.lastUpdate | date:'medium' }}</p>
+    <p class="note">
+      Note: This is a simulated dashboard. Connect to your backend API for real-time data.
+    </p>
+  </div>
+</div>

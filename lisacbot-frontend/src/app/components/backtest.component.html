@@ -1,0 +1,102 @@
+<div class="backtest-container">
+  <h2>Strategy Backtest</h2>
+
+  <div class="backtest-form">
+    <div class="form-group">
+      <label for="days">Backtest Period (days):</label>
+      <input
+        type="number"
+        id="days"
+        name="days"
+        [(ngModel)]="config.days"
+        min="1"
+        max="365"
+        class="form-control">
+      <small>Test strategy performance over historical data (1-365 days)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="initialBalance">Initial Balance ($):</label>
+      <input
+        type="number"
+        id="initialBalance"
+        name="initialBalance"
+        [(ngModel)]="config.initialBalance"
+        min="100"
+        step="100"
+        class="form-control">
+      <small>Starting capital for the backtest</small>
+    </div>
+
+    <button
+      (click)="runBacktest()"
+      class="btn-run"
+      [disabled]="loading">
+      <span *ngIf="!loading">Run Backtest</span>
+      <span *ngIf="loading">Running...</span>
+    </button>
+  </div>
+
+  <div *ngIf="error" class="error-message">
+    {{ error }}
+  </div>
+
+  <div *ngIf="result" class="results" [ngClass]="getResultClass()">
+    <h3>Backtest Results</h3>
+
+    <div class="result-grid">
+      <div class="result-item">
+        <span class="label">Period:</span>
+        <span class="value">{{ result.days }} days</span>
+      </div>
+
+      <div class="result-item">
+        <span class="label">Initial Balance:</span>
+        <span class="value">${{ result.initialBalance.toFixed(2) }}</span>
+      </div>
+
+      <div class="result-item">
+        <span class="label">Final Balance:</span>
+        <span class="value">${{ result.finalBalance.toFixed(2) }}</span>
+      </div>
+
+      <div class="result-item highlight">
+        <span class="label">Profit/Loss:</span>
+        <span class="value">
+          ${{ result.profitLoss.toFixed(2) }}
+          ({{ result.profitLossPercentage.toFixed(2) }}%)
+        </span>
+      </div>
+
+      <div class="result-item">
+        <span class="label">Total Trades:</span>
+        <span class="value">{{ result.totalTrades }}</span>
+      </div>
+
+      <div class="result-item">
+        <span class="label">Buy Trades:</span>
+        <span class="value">{{ result.buyTrades }}</span>
+      </div>
+
+      <div class="result-item">
+        <span class="label">Sell Trades:</span>
+        <span class="value">{{ result.sellTrades }}</span>
+      </div>
+    </div>
+
+    <div class="performance-summary">
+      <h4>Performance Summary</h4>
+      <p *ngIf="result.profitLoss > 0" class="success">
+        Your strategy would have made a profit of ${{ result.profitLoss.toFixed(2) }}
+        over {{ result.days }} days!
+      </p>
+      <p *ngIf="result.profitLoss < 0" class="warning">
+        Your strategy would have lost ${{ Math.abs(result.profitLoss).toFixed(2) }}
+        over {{ result.days }} days. Consider adjusting your parameters.
+      </p>
+      <p *ngIf="result.profitLoss === 0" class="neutral">
+        Your strategy broke even over {{ result.days }} days.
+      </p>
+    </div>
+  </div>
+</div>

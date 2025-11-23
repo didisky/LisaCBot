@@ -1,0 +1,26 @@
+<div class="app-container">
+  <nav class="navbar">
+    <div class="nav-brand">
+      <h1>{{ title }}</h1>
+    </div>
+    <div class="nav-links">
+      <a routerLink="/dashboard" routerLinkActive="active">
+        <span class="icon">📊</span> Dashboard
+      </a>
+      <a routerLink="/config" routerLinkActive="active">
+        <span class="icon">⚙️</span> Configuration
+      </a>
+      <a routerLink="/backtest" routerLinkActive="active">
+        <span class="icon">📈</span> Backtest
+      </a>
+    </div>
+  </nav>
+
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="footer">
+    <p>LisaCBot - Crypto Trading Bot Dashboard | Built with Angular & Spring Boot</p>
+  </footer>
+</div>
