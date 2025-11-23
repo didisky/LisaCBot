@@ -41,9 +41,37 @@
     {{ error }}
   </div>
 
-  <div *ngIf="result" class="results" [ngClass]="getResultClass()">
-    <h3>Backtest Results</h3>
+  <!-- Logs Window -->
+  <div *ngIf="logs.length > 0" class="logs-container">
+    <h3>Execution Logs</h3>
+    <div class="logs-window">
+      <div *ngFor="let log of logs" class="log-entry">{{ log }}</div>
+    </div>
+  </div>
 
+  <!-- Results Section -->
+  <div *ngIf="result" class="results" [ngClass]="getResultClass()">
+    <h3>{{ getPerformanceIcon() }} Backtest Results</h3>
+
+    <!-- Main Performance Card -->
+    <div class="performance-card">
+      <div class="performance-main">
+        <div class="metric">
+          <span class="metric-label">Profit/Loss</span>
+          <span class="metric-value" [class.positive]="result.profitLoss >= 0" [class.negative]="result.profitLoss < 0">
+            ${{ result.profitLoss.toFixed(2) }}
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Return</span>
+          <span class="metric-value" [class.positive]="result.profitLossPercentage >= 0" [class.negative]="result.profitLossPercentage < 0">
+            {{ result.profitLossPercentage.toFixed(2) }}%
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Results Grid -->
     <div class="result-grid">
       <div class="result-item">
         <span class="label">Period:</span>
@@ -58,14 +86,6 @@
       <div class="result-item">
         <span class="label">Final Balance:</span>
         <span class="value">${{ result.finalBalance.toFixed(2) }}</span>
-      </div>
-
-      <div class="result-item highlight">
-        <span class="label">Profit/Loss:</span>
-        <span class="value">
-          ${{ result.profitLoss.toFixed(2) }}
-          ({{ result.profitLossPercentage.toFixed(2) }}%)
-        </span>
       </div>
 
       <div class="result-item">
@@ -84,15 +104,16 @@
       </div>
     </div>
 
+    <!-- Performance Summary -->
     <div class="performance-summary">
       <h4>Performance Summary</h4>
       <p *ngIf="result.profitLoss > 0" class="success">
         Your strategy would have made a profit of ${{ result.profitLoss.toFixed(2) }}
-        over {{ result.days }} days!
+        over {{ result.days }} days! That's a {{ result.profitLossPercentage.toFixed(2) }}% return.
       </p>
       <p *ngIf="result.profitLoss < 0" class="warning">
         Your strategy would have lost ${{ Math.abs(result.profitLoss).toFixed(2) }}
-        over {{ result.days }} days. Consider adjusting your parameters.
+        over {{ result.days }} days ({{ result.profitLossPercentage.toFixed(2) }}%). Consider adjusting your parameters.
       </p>
       <p *ngIf="result.profitLoss === 0" class="neutral">
         Your strategy broke even over {{ result.days }} days.

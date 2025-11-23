@@ -11,9 +11,12 @@ export class BotService {
 
   constructor(private http: HttpClient) {}
 
-  runBacktest(days?: number): Observable<BacktestResult> {
-    const url = days ? `${this.apiUrl}/backtest?days=${days}` : `${this.apiUrl}/backtest`;
-    return this.http.post<BacktestResult>(url, {});
+  runBacktest(days?: number, balance?: number): Observable<BacktestResult> {
+    if (days !== undefined && balance !== undefined) {
+      const url = `${this.apiUrl}/backtest/custom?days=${days}&balance=${balance}`;
+      return this.http.post<BacktestResult>(url, {});
+    }
+    return this.http.post<BacktestResult>(`${this.apiUrl}/backtest`, {});
   }
 
   getBotStatus(): Observable<any> {
