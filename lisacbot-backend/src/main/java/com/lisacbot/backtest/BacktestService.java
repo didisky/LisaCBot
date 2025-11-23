@@ -1,5 +1,9 @@
-package com.lisacbot;
+package com.lisacbot.backtest;
 
+import com.lisacbot.price.HistoricalPriceService;
+import com.lisacbot.price.PriceData;
+import com.lisacbot.strategy.TradingStrategy;
+import com.lisacbot.trading.Signal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;

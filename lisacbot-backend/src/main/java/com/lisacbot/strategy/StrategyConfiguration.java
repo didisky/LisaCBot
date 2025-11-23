@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.strategy;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

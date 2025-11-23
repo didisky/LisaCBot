@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.price;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

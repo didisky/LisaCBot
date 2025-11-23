@@ -1,4 +1,4 @@
-package com.lisacbot;
+package com.lisacbot.trading;
 
 public enum Signal {
     BUY,

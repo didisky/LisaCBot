@@ -1,5 +1,7 @@
-package com.lisacbot;
+package com.lisacbot.trading;
 
+import com.lisacbot.price.PriceService;
+import com.lisacbot.strategy.TradingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
