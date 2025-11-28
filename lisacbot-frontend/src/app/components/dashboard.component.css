@@ -163,3 +163,44 @@ h2 {
   height: 400px;
   width: 100%;
 }
+
+/* Market Cycle Cards */
+.market-cycle-accumulation {
+  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+  color: white;
+}
+
+.market-cycle-accumulation .stat-label,
+.market-cycle-accumulation .stat-value {
+  color: white;
+}
+
+.market-cycle-markup {
+  background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+  color: white;
+}
+
+.market-cycle-markup .stat-label,
+.market-cycle-markup .stat-value {
+  color: white;
+}
+
+.market-cycle-distribution {
+  background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
+  color: white;
+}
+
+.market-cycle-distribution .stat-label,
+.market-cycle-distribution .stat-value {
+  color: white;
+}
+
+.market-cycle-markdown {
+  background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+  color: white;
+}
+
+.market-cycle-markdown .stat-label,
+.market-cycle-markdown .stat-value {
+  color: white;
+}

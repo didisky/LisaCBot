@@ -41,6 +41,14 @@
         <div class="stat-value">${{ botStatus.totalValue.toFixed(2) }}</div>
       </div>
     </div>
+
+    <div class="stat-card" [ngClass]="getMarketCycleClass()">
+      <div class="stat-icon">🔄</div>
+      <div class="stat-content">
+        <div class="stat-label">Market Cycle</div>
+        <div class="stat-value">{{ botStatus.marketCycle || 'N/A' }}</div>
+      </div>
+    </div>
   </div>
 
   <div class="chart-panel">

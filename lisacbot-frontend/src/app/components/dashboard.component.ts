@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BotService } from '../services/bot.service';
 import { Subscription } from 'rxjs';
@@ -24,6 +24,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     holdings: 0.00,
     currentPrice: 0,
     totalValue: 1000.00,
+    marketCycle: '',
     lastUpdate: new Date()
   };
 
@@ -84,7 +85,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private statusSubscription?: Subscription;
 
-  constructor(private botService: BotService) {}
+  constructor(
+    private botService: BotService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     // Subscribe to the shared status observable
@@ -95,15 +99,19 @@ export class DashboardComponent implements OnInit, OnDestroy {
             running: status.running,
             balance: status.balance,
             holdings: status.holdings,
-            currentPrice: status.currentPrice,
+            currentPrice: status.lastPrice,
             totalValue: status.totalValue,
+            marketCycle: status.marketCycle || '',
             lastUpdate: new Date()
           };
 
+          // Force change detection
+          this.cdr.detectChanges();
+
           // Update price history for the chart only if price changed
-          if (status.currentPrice > 0 && status.currentPrice !== this.lastRecordedPrice) {
-            this.updatePriceHistory(status.currentPrice);
-            this.lastRecordedPrice = status.currentPrice;
+          if (status.lastPrice > 0 && status.lastPrice !== this.lastRecordedPrice) {
+            this.updatePriceHistory(status.lastPrice);
+            this.lastRecordedPrice = status.lastPrice;
           }
         }
       },
@@ -151,8 +159,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
           running: status.running,
           balance: status.balance,
           holdings: status.holdings,
-          currentPrice: status.currentPrice,
+          currentPrice: status.lastPrice,
           totalValue: status.totalValue,
+          marketCycle: status.marketCycle || '',
           lastUpdate: new Date()
         };
       },
@@ -160,5 +169,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.error('Error fetching bot status:', err);
       }
     });
+  }
+
+  getMarketCycleClass(): string {
+    const cycle = this.botStatus.marketCycle?.toUpperCase();
+    switch (cycle) {
+      case 'ACCUMULATION':
+        return 'market-cycle-accumulation';
+      case 'MARKUP':
+        return 'market-cycle-markup';
+      case 'DISTRIBUTION':
+        return 'market-cycle-distribution';
+      case 'MARKDOWN':
+        return 'market-cycle-markdown';
+      default:
+        return '';
+    }
   }
 }

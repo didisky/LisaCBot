@@ -8,8 +8,9 @@ export interface BotStatus {
   running: boolean;
   balance: number;
   holdings: number;
-  currentPrice: number;
+  lastPrice: number;
   totalValue: number;
+  marketCycle?: any;  // Optional market cycle information
 }
 
 @Injectable({
