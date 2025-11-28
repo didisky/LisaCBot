@@ -22,6 +22,8 @@ public class TradingService {
     private final PriceProvider priceProvider;
     private final TradingStrategy strategy;
     private final Portfolio portfolio;
+    private final boolean stopLossEnabled;
+    private final double stopLossPercentage;
 
     private Price lastPrice;
     private boolean running;
@@ -29,11 +31,15 @@ public class TradingService {
     public TradingService(
             PriceProvider priceProvider,
             TradingStrategy strategy,
-            @Value("${bot.initial.balance}") double initialBalance
+            @Value("${bot.initial.balance}") double initialBalance,
+            @Value("${bot.stop.loss.enabled:false}") boolean stopLossEnabled,
+            @Value("${bot.stop.loss.percentage:5.0}") double stopLossPercentage
     ) {
         this.priceProvider = priceProvider;
         this.strategy = strategy;
         this.portfolio = new Portfolio(initialBalance);
+        this.stopLossEnabled = stopLossEnabled;
+        this.stopLossPercentage = stopLossPercentage;
         this.running = false;
     }
 
@@ -42,39 +48,84 @@ public class TradingService {
         running = true;
         log.info("LisaCBot started");
         log.info("Starting balance: ${}", portfolio.getBalance());
+        if (stopLossEnabled) {
+            log.info("Stop-loss enabled: {}%", stopLossPercentage);
+        }
     }
 
     public void executeTradingCycle() {
         try {
             lastPrice = priceProvider.getCurrentPrice();
-            log.info("BTC price: ${}", String.format("%.2f", lastPrice.value()));
-
-            Signal signal = strategy.analyze(lastPrice.value());
-            executeSignal(signal);
-
+            executeTradingCycle(lastPrice.value());
         } catch (Exception e) {
             log.error("Error during trading cycle: {}", e.getMessage());
         }
     }
 
-    private void executeSignal(Signal signal) {
+    /**
+     * Executes a trading cycle with a given price.
+     * This method contains the core trading logic including stop-loss checks.
+     * Can be called by real-time trading or backtesting.
+     *
+     * @param price the current price to use for trading decisions
+     * @param portfolio the portfolio to operate on
+     * @return the signal that was executed (BUY, SELL, or HOLD)
+     */
+    public Signal executeTradingCycle(double price, Portfolio portfolio) {
+        log.info("BTC price: ${}", String.format("%.2f", price));
+
+        // Check stop-loss first (risk management has priority)
+        if (stopLossEnabled && portfolio.shouldTriggerStopLoss(price, stopLossPercentage)) {
+            double loss = portfolio.getCurrentProfitLossPercentage(price);
+            log.warn("STOP-LOSS TRIGGERED! Loss: {}%", String.format("%.2f", loss));
+            executeSignal(Signal.SELL, price, portfolio);
+            return Signal.SELL;
+        }
+
+        // Normal strategy analysis
+        Signal signal = strategy.analyze(price);
+        executeSignal(signal, price, portfolio);
+        return signal;
+    }
+
+    /**
+     * Executes a trading cycle with the service's own portfolio.
+     *
+     * @param price the current price
+     */
+    private void executeTradingCycle(double price) {
+        executeTradingCycle(price, this.portfolio);
+    }
+
+    private void executeSignal(Signal signal, double price, Portfolio portfolio) {
         switch (signal) {
             case BUY -> {
                 if (portfolio.hasBalance()) {
-                    portfolio.buy(lastPrice.value());
-                    log.info("BUY: Bought {} BTC", String.format("%.6f", portfolio.getHoldings()));
+                    portfolio.buy(price);
+                    log.info("BUY: Bought {} BTC at ${}",
+                            String.format("%.6f", portfolio.getHoldings()),
+                            String.format("%.2f", price));
                 }
             }
             case SELL -> {
                 if (portfolio.hasHoldings()) {
-                    portfolio.sell(lastPrice.value());
-                    log.info("SELL: Sold for ${}", String.format("%.2f", portfolio.getBalance()));
+                    double profitLoss = portfolio.getCurrentProfitLossPercentage(price);
+                    portfolio.sell(price);
+                    log.info("SELL: Sold for ${} (P/L: {}%)",
+                            String.format("%.2f", portfolio.getBalance()),
+                            String.format("%.2f", profitLoss));
                 }
             }
-            case HOLD -> log.info("HOLD");
+            case HOLD -> {
+                log.info("HOLD");
+                if (portfolio.hasHoldings()) {
+                    double profitLoss = portfolio.getCurrentProfitLossPercentage(price);
+                    log.info("Current P/L: {}%", String.format("%.2f", profitLoss));
+                }
+            }
         }
 
-        double totalValue = portfolio.getTotalValue(lastPrice.value());
+        double totalValue = portfolio.getTotalValue(price);
         log.info("Portfolio value: ${}", String.format("%.2f", totalValue));
     }
 

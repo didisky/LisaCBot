@@ -5,7 +5,6 @@ import com.lisacbot.domain.model.BacktestResult;
 import com.lisacbot.domain.model.Portfolio;
 import com.lisacbot.domain.model.Price;
 import com.lisacbot.domain.model.Signal;
-import com.lisacbot.domain.strategy.TradingStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,13 +14,14 @@ import java.util.List;
 
 /**
  * Service for running backtests on trading strategies.
+ * Reuses the core trading logic from TradingService.
  */
 @Service
 public class BacktestService {
     private static final Logger log = LoggerFactory.getLogger(BacktestService.class);
 
     private final PriceProvider priceProvider;
-    private final TradingStrategy strategy;
+    private final TradingService tradingService;
 
     @Value("${bot.backtest.days}")
     private int defaultDays;
@@ -31,10 +31,10 @@ public class BacktestService {
 
     public BacktestService(
             PriceProvider priceProvider,
-            TradingStrategy strategy
+            TradingService tradingService
     ) {
         this.priceProvider = priceProvider;
-        this.strategy = strategy;
+        this.tradingService = tradingService;
     }
 
     public BacktestResult runBacktest() {
@@ -45,48 +45,33 @@ public class BacktestService {
         log.info("Starting backtest for {} days with ${} initial balance", days, initialBalance);
 
         List<Price> historicalPrices = priceProvider.getHistoricalPrices(days);
-        Portfolio portfolio = new Portfolio(initialBalance);
+        Portfolio backtestPortfolio = new Portfolio(initialBalance);
 
         int buyTrades = 0;
         int sellTrades = 0;
 
+        // Execute trading cycle for each historical price point
+        // This reuses the core trading logic including stop-loss from TradingService
         for (Price price : historicalPrices) {
-            Signal signal = strategy.analyze(price.value());
+            Signal executedSignal = tradingService.executeTradingCycle(price.value(), backtestPortfolio);
 
-            switch (signal) {
-                case BUY -> {
-                    if (portfolio.hasBalance()) {
-                        portfolio.buy(price.value());
-                        buyTrades++;
-                        log.debug("BUY at ${}: {} BTC",
-                                String.format("%.2f", price.value()),
-                                String.format("%.6f", portfolio.getHoldings()));
-                    }
-                }
-                case SELL -> {
-                    if (portfolio.hasHoldings()) {
-                        portfolio.sell(price.value());
-                        sellTrades++;
-                        log.debug("SELL at ${}: ${}",
-                                String.format("%.2f", price.value()),
-                                String.format("%.2f", portfolio.getBalance()));
-                    }
-                }
-                case HOLD -> {
-                    // No action
-                }
+            // Track trades
+            if (executedSignal == Signal.BUY && backtestPortfolio.hasHoldings()) {
+                buyTrades++;
+            } else if (executedSignal == Signal.SELL && !backtestPortfolio.hasHoldings()) {
+                sellTrades++;
             }
         }
 
         // Convert remaining holdings to balance using last price
-        if (portfolio.hasHoldings() && !historicalPrices.isEmpty()) {
+        if (backtestPortfolio.hasHoldings() && !historicalPrices.isEmpty()) {
             double lastPrice = historicalPrices.get(historicalPrices.size() - 1).value();
-            portfolio.sell(lastPrice);
+            backtestPortfolio.sell(lastPrice);
         }
 
         BacktestResult result = new BacktestResult(
                 initialBalance,
-                portfolio.getBalance(),
+                backtestPortfolio.getBalance(),
                 buyTrades,
                 sellTrades,
                 days
