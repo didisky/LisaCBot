@@ -30,8 +30,8 @@ public class TradingService {
     private final TradingStrategy strategy;
     private final MarketCycleDetector cycleDetector;
     private final Portfolio portfolio;
-    private final boolean stopLossEnabled;
-    private final double stopLossPercentage;
+    private final boolean trailingStopLossEnabled;
+    private final double trailingStopLossPercentage;
     private final boolean takeProfitEnabled;
     private final double takeProfitPercentage;
     private final int cycleAnalysisDays;
@@ -46,8 +46,8 @@ public class TradingService {
             TradingStrategy strategy,
             MarketCycleDetector cycleDetector,
             @Value("${bot.initial.balance}") double initialBalance,
-            @Value("${bot.stop.loss.enabled}") boolean stopLossEnabled,
-            @Value("${bot.stop.loss.percentage}") double stopLossPercentage,
+            @Value("${bot.trailing.stop.loss.enabled}") boolean trailingStopLossEnabled,
+            @Value("${bot.trailing.stop.loss.percentage}") double trailingStopLossPercentage,
             @Value("${bot.take.profit.enabled}") boolean takeProfitEnabled,
             @Value("${bot.take.profit.percentage}") double takeProfitPercentage,
             @Value("${bot.cycle.analysis.window.days}") int cycleAnalysisDays,
@@ -57,8 +57,8 @@ public class TradingService {
         this.strategy = strategy;
         this.cycleDetector = cycleDetector;
         this.portfolio = new Portfolio(initialBalance);
-        this.stopLossEnabled = stopLossEnabled;
-        this.stopLossPercentage = stopLossPercentage;
+        this.trailingStopLossEnabled = trailingStopLossEnabled;
+        this.trailingStopLossPercentage = trailingStopLossPercentage;
         this.takeProfitEnabled = takeProfitEnabled;
         this.takeProfitPercentage = takeProfitPercentage;
         this.cycleAnalysisDays = cycleAnalysisDays;
@@ -78,8 +78,8 @@ public class TradingService {
         running = true;
         log.info("LisaCBot started");
         log.info("Starting balance: ${}", portfolio.getBalance());
-        if (stopLossEnabled) {
-            log.info("Stop-loss enabled: {}%", stopLossPercentage);
+        if (trailingStopLossEnabled) {
+            log.info("Trailing stop-loss enabled: {}%", trailingStopLossPercentage);
         }
         if (takeProfitEnabled) {
             log.info("Take-profit enabled: {}%", takeProfitPercentage);
@@ -163,12 +163,19 @@ public class TradingService {
     public Signal executeTradingCycle(double price, Portfolio portfolio) {
         log.info("BTC price: ${}", String.format("%.2f", price));
 
+        // Update highest price for trailing stop-loss calculation
+        portfolio.updateHighestPrice(price);
+
         // Risk management checks (priority over strategy)
 
-        // 1. Check stop-loss first (protect against losses)
-        if (stopLossEnabled && portfolio.shouldTriggerStopLoss(price, stopLossPercentage)) {
-            double loss = portfolio.getCurrentProfitLossPercentage(price);
-            log.warn("STOP-LOSS TRIGGERED! Loss: {}%", String.format("%.2f", loss));
+        // 1. Check trailing stop-loss (protect against losses and secure profits)
+        if (trailingStopLossEnabled && portfolio.shouldTriggerTrailingStopLoss(price, trailingStopLossPercentage)) {
+            double profitLoss = portfolio.getCurrentProfitLossPercentage(price);
+            double highestPrice = portfolio.getHighestPriceSinceEntry();
+            log.warn("TRAILING STOP-LOSS TRIGGERED! Peak: ${}, Current: ${}, P/L: {}%",
+                    String.format("%.2f", highestPrice),
+                    String.format("%.2f", price),
+                    String.format("%.2f", profitLoss));
             executeSignal(Signal.SELL, price, portfolio);
             return Signal.SELL;
         }

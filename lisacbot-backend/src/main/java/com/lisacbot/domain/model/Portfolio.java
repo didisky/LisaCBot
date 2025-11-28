@@ -7,11 +7,13 @@ public class Portfolio {
     private double balance;
     private double holdings;
     private double buyPrice;  // Track the price at which we bought
+    private double highestPriceSinceEntry;  // Track highest price for trailing stop-loss
 
     public Portfolio(double initialBalance) {
         this.balance = initialBalance;
         this.holdings = 0.0;
         this.buyPrice = 0.0;
+        this.highestPriceSinceEntry = 0.0;
     }
 
     public void buy(double price) {
@@ -19,6 +21,7 @@ public class Portfolio {
             holdings = balance / price;
             balance = 0;
             buyPrice = price;  // Remember buy price for stop-loss
+            highestPriceSinceEntry = price;  // Initialize highest price at entry
         }
     }
 
@@ -27,6 +30,7 @@ public class Portfolio {
             balance = holdings * price;
             holdings = 0;
             buyPrice = 0.0;  // Reset buy price
+            highestPriceSinceEntry = 0.0;  // Reset highest price
         }
     }
 
@@ -44,6 +48,37 @@ public class Portfolio {
 
         double lossPercentage = ((buyPrice - currentPrice) / buyPrice) * 100.0;
         return lossPercentage >= stopLossPercentage;
+    }
+
+    /**
+     * Updates the highest price seen since entry.
+     * This is used for trailing stop-loss calculation.
+     *
+     * @param currentPrice current market price
+     */
+    public void updateHighestPrice(double currentPrice) {
+        if (hasHoldings() && currentPrice > highestPriceSinceEntry) {
+            highestPriceSinceEntry = currentPrice;
+        }
+    }
+
+    /**
+     * Checks if trailing stop-loss should be triggered.
+     * Unlike fixed stop-loss, trailing stop-loss follows the price upward.
+     * The stop-loss is calculated from the highest price reached, not the buy price.
+     *
+     * @param currentPrice current market price
+     * @param trailingStopLossPercentage maximum drop from peak (e.g., 5.0 for 5%)
+     * @return true if current price dropped below trailing stop threshold
+     */
+    public boolean shouldTriggerTrailingStopLoss(double currentPrice, double trailingStopLossPercentage) {
+        if (!hasHoldings() || highestPriceSinceEntry == 0.0) {
+            return false;
+        }
+
+        // Calculate drop percentage from the highest price (not buy price)
+        double dropPercentage = ((highestPriceSinceEntry - currentPrice) / highestPriceSinceEntry) * 100.0;
+        return dropPercentage >= trailingStopLossPercentage;
     }
 
     /**
@@ -76,6 +111,10 @@ public class Portfolio {
 
     public double getBuyPrice() {
         return buyPrice;
+    }
+
+    public double getHighestPriceSinceEntry() {
+        return highestPriceSinceEntry;
     }
 
     public boolean hasBalance() {
