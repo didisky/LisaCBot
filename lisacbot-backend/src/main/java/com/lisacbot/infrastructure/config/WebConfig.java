@@ -1,11 +1,11 @@
-package com.lisacbot.config;
+package com.lisacbot.infrastructure.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
- * Web configuration to enable CORS for frontend communication.
+ * Web configuration for CORS.
  */
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
