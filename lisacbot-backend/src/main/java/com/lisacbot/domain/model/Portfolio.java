@@ -46,6 +46,22 @@ public class Portfolio {
         return lossPercentage >= stopLossPercentage;
     }
 
+    /**
+     * Checks if take-profit should be triggered.
+     *
+     * @param currentPrice current market price
+     * @param takeProfitPercentage target profit percentage (e.g., 8.0 for 8%)
+     * @return true if current profit exceeds take-profit threshold
+     */
+    public boolean shouldTriggerTakeProfit(double currentPrice, double takeProfitPercentage) {
+        if (!hasHoldings() || buyPrice == 0.0) {
+            return false;
+        }
+
+        double profitPercentage = ((currentPrice - buyPrice) / buyPrice) * 100.0;
+        return profitPercentage >= takeProfitPercentage;
+    }
+
     public double getTotalValue(double currentPrice) {
         return balance + (holdings * currentPrice);
     }

@@ -24,6 +24,8 @@ public class TradingService {
     private final Portfolio portfolio;
     private final boolean stopLossEnabled;
     private final double stopLossPercentage;
+    private final boolean takeProfitEnabled;
+    private final double takeProfitPercentage;
 
     private Price lastPrice;
     private boolean running;
@@ -32,14 +34,18 @@ public class TradingService {
             PriceProvider priceProvider,
             TradingStrategy strategy,
             @Value("${bot.initial.balance}") double initialBalance,
-            @Value("${bot.stop.loss.enabled:false}") boolean stopLossEnabled,
-            @Value("${bot.stop.loss.percentage:5.0}") double stopLossPercentage
+            @Value("${bot.stop.loss.enabled}") boolean stopLossEnabled,
+            @Value("${bot.stop.loss.percentage}") double stopLossPercentage,
+            @Value("${bot.take.profit.enabled}") boolean takeProfitEnabled,
+            @Value("${bot.take.profit.percentage}") double takeProfitPercentage
     ) {
         this.priceProvider = priceProvider;
         this.strategy = strategy;
         this.portfolio = new Portfolio(initialBalance);
         this.stopLossEnabled = stopLossEnabled;
         this.stopLossPercentage = stopLossPercentage;
+        this.takeProfitEnabled = takeProfitEnabled;
+        this.takeProfitPercentage = takeProfitPercentage;
         this.running = false;
     }
 
@@ -50,6 +56,9 @@ public class TradingService {
         log.info("Starting balance: ${}", portfolio.getBalance());
         if (stopLossEnabled) {
             log.info("Stop-loss enabled: {}%", stopLossPercentage);
+        }
+        if (takeProfitEnabled) {
+            log.info("Take-profit enabled: {}%", takeProfitPercentage);
         }
     }
 
@@ -64,7 +73,7 @@ public class TradingService {
 
     /**
      * Executes a trading cycle with a given price.
-     * This method contains the core trading logic including stop-loss checks.
+     * This method contains the core trading logic including stop-loss and take-profit checks.
      * Can be called by real-time trading or backtesting.
      *
      * @param price the current price to use for trading decisions
@@ -74,7 +83,9 @@ public class TradingService {
     public Signal executeTradingCycle(double price, Portfolio portfolio) {
         log.info("BTC price: ${}", String.format("%.2f", price));
 
-        // Check stop-loss first (risk management has priority)
+        // Risk management checks (priority over strategy)
+
+        // 1. Check stop-loss first (protect against losses)
         if (stopLossEnabled && portfolio.shouldTriggerStopLoss(price, stopLossPercentage)) {
             double loss = portfolio.getCurrentProfitLossPercentage(price);
             log.warn("STOP-LOSS TRIGGERED! Loss: {}%", String.format("%.2f", loss));
@@ -82,7 +93,15 @@ public class TradingService {
             return Signal.SELL;
         }
 
-        // Normal strategy analysis
+        // 2. Check take-profit (secure gains)
+        if (takeProfitEnabled && portfolio.shouldTriggerTakeProfit(price, takeProfitPercentage)) {
+            double profit = portfolio.getCurrentProfitLossPercentage(price);
+            log.info("TAKE-PROFIT TRIGGERED! Profit: +{}%", String.format("%.2f", profit));
+            executeSignal(Signal.SELL, price, portfolio);
+            return Signal.SELL;
+        }
+
+        // 3. Normal strategy analysis
         Signal signal = strategy.analyze(price);
         executeSignal(signal, price, portfolio);
         return signal;

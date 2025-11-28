@@ -21,16 +21,16 @@ public class BotConfiguration {
     private int smaPeriod;
 
     // EMA+RSI configuration
-    @Value("${bot.strategy.ema.period:20}")
+    @Value("${bot.strategy.ema.period}")
     private int emaPeriod;
 
-    @Value("${bot.strategy.rsi.period:14}")
+    @Value("${bot.strategy.rsi.period}")
     private int rsiPeriod;
 
-    @Value("${bot.strategy.rsi.oversold:30}")
+    @Value("${bot.strategy.rsi.oversold}")
     private int rsiOversold;
 
-    @Value("${bot.strategy.rsi.overbought:70}")
+    @Value("${bot.strategy.rsi.overbought}")
     private int rsiOverbought;
 
     @Bean
