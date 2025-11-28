@@ -8,6 +8,7 @@ public record BotStatus(
         double balance,
         double holdings,
         double lastPrice,
-        double totalValue
+        double totalValue,
+        MarketCycle marketCycle
 ) {
 }

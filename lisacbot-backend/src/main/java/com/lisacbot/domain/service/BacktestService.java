@@ -2,6 +2,7 @@ package com.lisacbot.domain.service;
 
 import com.lisacbot.domain.port.PriceProvider;
 import com.lisacbot.domain.model.BacktestResult;
+import com.lisacbot.domain.model.MarketCycle;
 import com.lisacbot.domain.model.Portfolio;
 import com.lisacbot.domain.model.Price;
 import com.lisacbot.domain.model.Signal;
@@ -22,6 +23,7 @@ public class BacktestService {
 
     private final PriceProvider priceProvider;
     private final TradingService tradingService;
+    private final MarketCycleDetector cycleDetector;
 
     @Value("${bot.backtest.days}")
     private int defaultDays;
@@ -31,10 +33,12 @@ public class BacktestService {
 
     public BacktestService(
             PriceProvider priceProvider,
-            TradingService tradingService
+            TradingService tradingService,
+            MarketCycleDetector cycleDetector
     ) {
         this.priceProvider = priceProvider;
         this.tradingService = tradingService;
+        this.cycleDetector = cycleDetector;
     }
 
     public BacktestResult runBacktest() {
@@ -47,11 +51,18 @@ public class BacktestService {
         List<Price> historicalPrices = priceProvider.getHistoricalPrices(days);
         Portfolio backtestPortfolio = new Portfolio(initialBalance);
 
+        // Detect the market cycle at the start of the backtest period
+        // This gives a realistic simulation of the market conditions during the backtest
+        MarketCycle backtestCycle = cycleDetector.detectCycle(historicalPrices);
+        log.info("Backtest period market cycle detected: {}", backtestCycle);
+        log.info("NOTE: Backtest will respect current allowed cycles configuration");
+
         int buyTrades = 0;
         int sellTrades = 0;
 
         // Execute trading cycle for each historical price point
-        // This reuses the core trading logic including stop-loss from TradingService
+        // This reuses the core trading logic including stop-loss, take-profit, and cycle checks from TradingService
+        // The cycle check uses the current real-time cycle, which represents the strategy configuration being tested
         for (Price price : historicalPrices) {
             Signal executedSignal = tradingService.executeTradingCycle(price.value(), backtestPortfolio);
 

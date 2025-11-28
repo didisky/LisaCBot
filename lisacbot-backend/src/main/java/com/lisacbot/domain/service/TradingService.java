@@ -2,6 +2,7 @@ package com.lisacbot.domain.service;
 
 import com.lisacbot.domain.port.PriceProvider;
 import com.lisacbot.domain.model.BotStatus;
+import com.lisacbot.domain.model.MarketCycle;
 import com.lisacbot.domain.model.Portfolio;
 import com.lisacbot.domain.model.Price;
 import com.lisacbot.domain.model.Signal;
@@ -10,7 +11,13 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Core trading service implementing the trading business logic.
@@ -21,32 +28,49 @@ public class TradingService {
 
     private final PriceProvider priceProvider;
     private final TradingStrategy strategy;
+    private final MarketCycleDetector cycleDetector;
     private final Portfolio portfolio;
     private final boolean stopLossEnabled;
     private final double stopLossPercentage;
     private final boolean takeProfitEnabled;
     private final double takeProfitPercentage;
+    private final int cycleAnalysisDays;
+    private final Set<MarketCycle> allowedCycles;
 
     private Price lastPrice;
     private boolean running;
+    private MarketCycle currentMarketCycle;
 
     public TradingService(
             PriceProvider priceProvider,
             TradingStrategy strategy,
+            MarketCycleDetector cycleDetector,
             @Value("${bot.initial.balance}") double initialBalance,
             @Value("${bot.stop.loss.enabled}") boolean stopLossEnabled,
             @Value("${bot.stop.loss.percentage}") double stopLossPercentage,
             @Value("${bot.take.profit.enabled}") boolean takeProfitEnabled,
-            @Value("${bot.take.profit.percentage}") double takeProfitPercentage
+            @Value("${bot.take.profit.percentage}") double takeProfitPercentage,
+            @Value("${bot.cycle.analysis.window.days}") int cycleAnalysisDays,
+            @Value("${bot.cycle.allowed}") String allowedCyclesConfig
     ) {
         this.priceProvider = priceProvider;
         this.strategy = strategy;
+        this.cycleDetector = cycleDetector;
         this.portfolio = new Portfolio(initialBalance);
         this.stopLossEnabled = stopLossEnabled;
         this.stopLossPercentage = stopLossPercentage;
         this.takeProfitEnabled = takeProfitEnabled;
         this.takeProfitPercentage = takeProfitPercentage;
+        this.cycleAnalysisDays = cycleAnalysisDays;
+
+        // Parse allowed cycles from comma-separated config
+        this.allowedCycles = Arrays.stream(allowedCyclesConfig.split(","))
+                .map(String::trim)
+                .map(MarketCycle::valueOf)
+                .collect(Collectors.toSet());
+
         this.running = false;
+        this.currentMarketCycle = MarketCycle.UNKNOWN;
     }
 
     @PostConstruct
@@ -60,6 +84,10 @@ public class TradingService {
         if (takeProfitEnabled) {
             log.info("Take-profit enabled: {}%", takeProfitPercentage);
         }
+        log.info("Allowed market cycles for trading: {}", allowedCycles);
+
+        // Initial market cycle detection
+        updateMarketCycle();
     }
 
     public void executeTradingCycle() {
@@ -69,6 +97,58 @@ public class TradingService {
         } catch (Exception e) {
             log.error("Error during trading cycle: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Scheduled task to periodically update the market cycle.
+     * Runs at the configured interval (default: every 24 hours).
+     * The fixedRateString uses milliseconds, so we convert hours to ms: hours * 60 * 60 * 1000
+     */
+    @Scheduled(fixedRateString = "#{${bot.cycle.update.interval.hours} * 60 * 60 * 1000}")
+    public void scheduledMarketCycleUpdate() {
+        log.info("Scheduled market cycle update triggered");
+        updateMarketCycle();
+    }
+
+    /**
+     * Updates the current market cycle by analyzing historical price data.
+     * This should be called periodically (e.g., once per day) as cycle detection requires time.
+     * If the new cycle is not allowed and we have holdings, triggers an automatic sell.
+     */
+    public void updateMarketCycle() {
+        try {
+            log.info("Updating market cycle analysis...");
+            List<Price> historicalPrices = priceProvider.getHistoricalPrices(cycleAnalysisDays);
+            MarketCycle previousCycle = currentMarketCycle;
+            currentMarketCycle = cycleDetector.detectCycle(historicalPrices);
+
+            log.info("Market cycle updated: {} -> {}", previousCycle, currentMarketCycle);
+
+            // Check if we entered a non-allowed cycle
+            if (!isTradingAllowed()) {
+                log.warn("Entered non-allowed market cycle: {}. Trading is now DISABLED.", currentMarketCycle);
+
+                // If we have holdings, sell immediately
+                if (portfolio.hasHoldings() && lastPrice != null) {
+                    log.warn("CYCLE PROTECTION: Selling holdings due to non-allowed market cycle");
+                    executeSignal(Signal.SELL, lastPrice.value(), portfolio);
+                }
+            } else {
+                log.info("Trading is ALLOWED in current market cycle: {}", currentMarketCycle);
+            }
+        } catch (Exception e) {
+            log.error("Error updating market cycle: {}", e.getMessage());
+            currentMarketCycle = MarketCycle.UNKNOWN;
+        }
+    }
+
+    /**
+     * Checks if trading is allowed in the current market cycle.
+     *
+     * @return true if current cycle is in the allowed cycles list
+     */
+    private boolean isTradingAllowed() {
+        return allowedCycles.contains(currentMarketCycle);
     }
 
     /**
@@ -101,7 +181,23 @@ public class TradingService {
             return Signal.SELL;
         }
 
-        // 3. Normal strategy analysis
+        // 3. Check if trading is allowed in current market cycle
+        if (!isTradingAllowed()) {
+            log.info("Trading DISABLED - current market cycle not allowed: {}", currentMarketCycle);
+
+            // If we somehow have holdings in a non-allowed cycle, sell them
+            if (portfolio.hasHoldings()) {
+                log.warn("CYCLE PROTECTION: Selling holdings in non-allowed cycle");
+                executeSignal(Signal.SELL, price, portfolio);
+                return Signal.SELL;
+            }
+
+            // Otherwise just hold (no trading)
+            log.info("HOLD (cycle protection)");
+            return Signal.HOLD;
+        }
+
+        // 4. Normal strategy analysis (only if cycle is allowed)
         Signal signal = strategy.analyze(price);
         executeSignal(signal, price, portfolio);
         return signal;
@@ -157,7 +253,8 @@ public class TradingService {
                 portfolio.getBalance(),
                 portfolio.getHoldings(),
                 currentPrice,
-                totalValue
+                totalValue,
+                currentMarketCycle
         );
     }
 }
