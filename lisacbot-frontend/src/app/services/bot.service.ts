@@ -38,9 +38,15 @@ export class BotService {
   runBacktest(days?: number, balance?: number): Observable<BacktestResult> {
     if (days !== undefined && balance !== undefined) {
       const url = `${this.apiUrl}/backtest/custom?days=${days}&balance=${balance}`;
-      return this.http.post<BacktestResult>(url, {});
+      console.log('📡 Calling backtest endpoint:', url);
+      return this.http.post<BacktestResult>(url, {}).pipe(
+        tap(result => console.log('📥 Backtest response received:', result))
+      );
     }
-    return this.http.post<BacktestResult>(`${this.apiUrl}/backtest`, {});
+    console.log('📡 Calling default backtest endpoint');
+    return this.http.post<BacktestResult>(`${this.apiUrl}/backtest`, {}).pipe(
+      tap(result => console.log('📥 Backtest response received:', result))
+    );
   }
 
   getBotStatus(): Observable<BotStatus> {

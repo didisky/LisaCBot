@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BotService } from '../services/bot.service';
@@ -24,7 +24,10 @@ export class BacktestComponent {
   logs: string[] = [];
   Math = Math; // Expose Math to template
 
-  constructor(private botService: BotService) {}
+  constructor(
+    private botService: BotService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   runBacktest() {
     this.loading = true;
@@ -34,19 +37,31 @@ export class BacktestComponent {
 
     this.addLog('Starting backtest...');
     this.addLog(`Configuration: ${this.config.days} days, $${this.config.initialBalance} initial balance`);
+    console.log('🔵 Backtest started with config:', this.config);
 
     this.botService.runBacktest(this.config.days, this.config.initialBalance).subscribe({
       next: (result) => {
+        console.log('✅ Backtest result received:', result);
         this.result = result;
         this.addLog('Backtest completed successfully');
         this.addLog(`Total trades executed: ${result.totalTrades}`);
         this.addLog(`Final P&L: $${result.profitLoss.toFixed(2)} (${result.profitLossPercentage.toFixed(2)}%)`);
         this.loading = false;
+        console.log('🟢 Backtest state - loading:', this.loading, 'result:', this.result);
+
+        // Force change detection
+        this.cdr.detectChanges();
+        console.log('🔄 Change detection triggered');
       },
       error: (err) => {
-        this.error = 'Failed to run backtest: ' + err.message;
-        this.addLog(`ERROR: ${err.message}`);
+        console.error('❌ Backtest error:', err);
+        this.error = 'Failed to run backtest: ' + (err.error?.message || err.message || 'Unknown error');
+        this.addLog(`ERROR: ${err.error?.message || err.message || 'Unknown error'}`);
         this.loading = false;
+        this.cdr.detectChanges();
+      },
+      complete: () => {
+        console.log('🏁 Backtest observable completed');
       }
     });
   }
