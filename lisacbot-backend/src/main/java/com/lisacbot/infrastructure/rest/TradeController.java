@@ -1,7 +1,9 @@
 package com.lisacbot.infrastructure.rest;
 
 import com.lisacbot.domain.model.Trade;
+import com.lisacbot.domain.model.TradeMetrics;
 import com.lisacbot.domain.port.TradeRepository;
+import com.lisacbot.domain.service.MetricsService;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,9 +19,11 @@ import java.util.List;
 public class TradeController {
 
     private final TradeRepository tradeRepository;
+    private final MetricsService metricsService;
 
-    public TradeController(TradeRepository tradeRepository) {
+    public TradeController(TradeRepository tradeRepository, MetricsService metricsService) {
         this.tradeRepository = tradeRepository;
+        this.metricsService = metricsService;
     }
 
     /**
@@ -45,5 +49,15 @@ public class TradeController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
     ) {
         return tradeRepository.findByTimestampBetween(start, end);
+    }
+
+    /**
+     * Get comprehensive trading performance metrics.
+     *
+     * @return calculated metrics including win rate, profit/loss, best/worst trades, etc.
+     */
+    @GetMapping("/metrics")
+    public TradeMetrics getMetrics() {
+        return metricsService.calculateMetrics();
     }
 }
