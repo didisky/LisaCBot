@@ -40,25 +40,35 @@ export class DashboardComponent implements OnInit, OnDestroy {
   maxDisplayedTrades = 10;
 
   // Chart configuration
-  public lineChartData: ChartConfiguration<'line'>['data'] = {
+  public lineChartData: any = {
     labels: [],
     datasets: [
       {
         data: [],
-        label: 'BTC Price (USD)',
-        fill: true,
-        tension: 0.4,
-        borderColor: '#4CAF50',
-        backgroundColor: 'rgba(76, 175, 80, 0.1)',
-        pointBackgroundColor: '#4CAF50',
+        label: 'BUY',
+        pointRadius: 8,
+        pointHoverRadius: 10,
+        pointBackgroundColor: '#28a745',
         pointBorderColor: '#fff',
-        pointHoverBackgroundColor: '#fff',
-        pointHoverBorderColor: '#4CAF50'
+        pointBorderWidth: 2,
+        showLine: false,
+        type: 'scatter'
+      },
+      {
+        data: [],
+        label: 'SELL',
+        pointRadius: 8,
+        pointHoverRadius: 10,
+        pointBackgroundColor: '#dc3545',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+        showLine: false,
+        type: 'scatter'
       }
     ]
   };
 
-  public lineChartOptions: ChartConfiguration<'line'>['options'] = {
+  public lineChartOptions: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -67,8 +77,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
         position: 'top',
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
+        mode: 'point',
+        intersect: true,
+        callbacks: {
+          label: (context: any) => {
+            const label = context.dataset.label || '';
+            const value = context.parsed.y;
+            return `${label}: $${value.toFixed(2)}`;
+          }
+        }
       }
     },
     scales: {
@@ -83,7 +100,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         display: true,
         title: {
           display: true,
-          text: 'Price (USD)'
+          text: 'BTC Price (USD)'
         }
       }
     }
@@ -138,27 +155,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   updatePriceHistory(price: number) {
-    const now = new Date();
-
-    // Add new price to history
-    this.priceHistory.push({
-      time: now,
-      price: price
-    });
-
-    // Keep only the last maxDataPoints
-    if (this.priceHistory.length > this.maxDataPoints) {
-      this.priceHistory.shift();
-    }
-
-    // Update chart data
-    this.lineChartData.labels = this.priceHistory.map(p =>
-      p.time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    );
-    this.lineChartData.datasets[0].data = this.priceHistory.map(p => p.price);
-
-    // Trigger chart update
-    this.chart?.update();
+    // Price history tracking removed - chart now only shows trade markers
+    // This method is kept for compatibility but does nothing
   }
 
   refreshData() {
@@ -186,12 +184,47 @@ export class DashboardComponent implements OnInit, OnDestroy {
         this.trades = trades;
         // Display only the most recent trades
         this.displayedTrades = trades.slice(0, this.maxDisplayedTrades);
+
+        // Update trade markers on chart
+        this.updateTradeMarkers();
+
         this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error fetching trade history:', err);
       }
     });
+  }
+
+  updateTradeMarkers() {
+    // Clear existing trade markers
+    this.lineChartData.datasets[0].data = [];
+    this.lineChartData.datasets[1].data = [];
+
+    // Add trade markers to chart
+    this.trades.forEach(trade => {
+      const tradeTime = new Date(trade.timestamp);
+      const timeLabel = tradeTime.toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      });
+
+      // Create data point with x/y coordinates
+      const dataPoint = {
+        x: timeLabel,
+        y: trade.price
+      };
+
+      if (trade.type === 'BUY') {
+        this.lineChartData.datasets[0].data.push(dataPoint);
+      } else if (trade.type === 'SELL') {
+        this.lineChartData.datasets[1].data.push(dataPoint);
+      }
+    });
+
+    // Trigger chart update
+    this.chart?.update();
   }
 
   getTradeTypeClass(type: string): string {

@@ -52,7 +52,7 @@
   </div>
 
   <div class="chart-panel">
-    <h3>BTC Price Evolution</h3>
+    <h3>Trade History Chart</h3>
     <div class="chart-container">
       <canvas baseChart
               [data]="lineChartData"
@@ -111,7 +111,7 @@
     <h3>Information</h3>
     <p><strong>Last Update:</strong> {{ botStatus.lastUpdate | date:'medium' }}</p>
     <p class="note">
-      Real-time data from backend API. Chart shows the last {{maxDataPoints}} price updates.
+      Real-time data from backend API. Chart displays all executed trades with BUY (green) and SELL (red) markers.
     </p>
   </div>
 </div>
