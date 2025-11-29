@@ -62,6 +62,51 @@
     </div>
   </div>
 
+  <div class="trade-history-panel">
+    <h3>Trade History</h3>
+    <div *ngIf="displayedTrades.length === 0" class="no-trades">
+      No trades executed yet.
+    </div>
+    <div *ngIf="displayedTrades.length > 0" class="trades-table-container">
+      <table class="trades-table">
+        <thead>
+          <tr>
+            <th>Date/Time</th>
+            <th>Type</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Balance After</th>
+            <th>P&L %</th>
+            <th>Strategy</th>
+            <th>Cycle</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let trade of displayedTrades" [ngClass]="getTradeTypeClass(trade.type)">
+            <td>{{ trade.timestamp | date:'short' }}</td>
+            <td class="trade-type">
+              <span class="badge" [ngClass]="getTradeTypeClass(trade.type)">
+                {{ trade.type }}
+              </span>
+            </td>
+            <td>${{ trade.price.toFixed(2) }}</td>
+            <td>{{ trade.quantity.toFixed(6) }}</td>
+            <td>${{ trade.balanceAfter.toFixed(2) }}</td>
+            <td [class.positive]="trade.profitLossPercentage && trade.profitLossPercentage > 0"
+                [class.negative]="trade.profitLossPercentage && trade.profitLossPercentage < 0">
+              {{ trade.profitLossPercentage ? trade.profitLossPercentage.toFixed(2) + '%' : 'N/A' }}
+            </td>
+            <td>{{ trade.strategy }}</td>
+            <td>{{ trade.marketCycle }}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="trades.length > maxDisplayedTrades" class="trade-count">
+        Showing {{ displayedTrades.length }} of {{ trades.length }} trades
+      </div>
+    </div>
+  </div>
+
   <div class="info-panel">
     <h3>Information</h3>
     <p><strong>Last Update:</strong> {{ botStatus.lastUpdate | date:'medium' }}</p>

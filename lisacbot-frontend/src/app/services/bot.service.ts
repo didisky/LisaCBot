@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, timer } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
 import { BacktestResult } from '../models/backtest-result.model';
+import { Trade } from '../models/trade.model';
 
 export interface BotStatus {
   running: boolean;
@@ -51,5 +52,9 @@ export class BotService {
 
   getBotStatus(): Observable<BotStatus> {
     return this.http.get<BotStatus>(`${this.apiUrl}/status`);
+  }
+
+  getTradeHistory(): Observable<Trade[]> {
+    return this.http.get<Trade[]>(`${this.apiUrl}/trades`);
   }
 }

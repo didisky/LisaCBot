@@ -204,3 +204,103 @@ h2 {
 .market-cycle-markdown .stat-value {
   color: white;
 }
+
+/* Trade History Panel */
+.trade-history-panel {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+}
+
+.trade-history-panel h3 {
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.no-trades {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.trades-table-container {
+  overflow-x: auto;
+}
+
+.trades-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.trades-table thead {
+  background-color: #f8f9fa;
+}
+
+.trades-table th {
+  padding: 0.75rem;
+  text-align: left;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  white-space: nowrap;
+}
+
+.trades-table td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  color: #333;
+}
+
+.trades-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.trades-table tbody tr.trade-buy {
+  border-left: 3px solid #28a745;
+}
+
+.trades-table tbody tr.trade-sell {
+  border-left: 3px solid #dc3545;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge.trade-buy {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge.trade-sell {
+  background-color: #dc3545;
+  color: white;
+}
+
+.positive {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.negative {
+  color: #dc3545;
+  font-weight: 600;
+}
+
+.trade-count {
+  text-align: center;
+  margin-top: 1rem;
+  color: #6c757d;
+  font-size: 0.875rem;
+  font-style: italic;
+}

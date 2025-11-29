@@ -1,6 +1,7 @@
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BotService } from '../services/bot.service';
+import { Trade } from '../models/trade.model';
 import { Subscription } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
@@ -32,6 +33,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   priceHistory: Array<{time: Date, price: number}> = [];
   maxDataPoints = 20;
   lastRecordedPrice: number = 0;
+
+  // Trade history
+  trades: Trade[] = [];
+  displayedTrades: Trade[] = [];
+  maxDisplayedTrades = 10;
 
   // Chart configuration
   public lineChartData: ChartConfiguration<'line'>['data'] = {
@@ -119,6 +125,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.error('Error fetching bot status:', err);
       }
     });
+
+    // Load trade history
+    this.loadTradeHistory();
   }
 
   ngOnDestroy() {
@@ -169,6 +178,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.error('Error fetching bot status:', err);
       }
     });
+  }
+
+  loadTradeHistory() {
+    this.botService.getTradeHistory().subscribe({
+      next: (trades) => {
+        this.trades = trades;
+        // Display only the most recent trades
+        this.displayedTrades = trades.slice(0, this.maxDisplayedTrades);
+        this.cdr.detectChanges();
+      },
+      error: (err) => {
+        console.error('Error fetching trade history:', err);
+      }
+    });
+  }
+
+  getTradeTypeClass(type: string): string {
+    return type === 'BUY' ? 'trade-buy' : 'trade-sell';
   }
 
   getMarketCycleClass(): string {
