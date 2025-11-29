@@ -123,7 +123,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   showNewTradeNotification = false;
   newTradeMessage = '';
 
-  private statusSubscription?: Subscription;
   private tradeEventSubscription?: Subscription;
 
   constructor(
@@ -133,34 +132,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit() {
-    // Subscribe to the shared status observable
-    this.statusSubscription = this.botService.status$.subscribe({
-      next: (status) => {
-        if (status) {
-          this.botStatus = {
-            running: status.running,
-            balance: status.balance,
-            holdings: status.holdings,
-            currentPrice: status.lastPrice,
-            totalValue: status.totalValue,
-            marketCycle: status.marketCycle || '',
-            lastUpdate: new Date()
-          };
-
-          // Force change detection
-          this.cdr.detectChanges();
-
-          // Update price history for the chart only if price changed
-          if (status.lastPrice > 0 && status.lastPrice !== this.lastRecordedPrice) {
-            this.updatePriceHistory(status.lastPrice);
-            this.lastRecordedPrice = status.lastPrice;
-          }
-        }
-      },
-      error: (err) => {
-        console.error('Error fetching bot status:', err);
-      }
-    });
+    // Load initial status
+    this.refreshData();
 
     // Load trade history
     this.loadTradeHistory();
@@ -180,9 +153,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnDestroy() {
     // Unsubscribe when component is destroyed
-    if (this.statusSubscription) {
-      this.statusSubscription.unsubscribe();
-    }
     if (this.tradeEventSubscription) {
       this.tradeEventSubscription.unsubscribe();
     }
@@ -221,6 +191,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   refreshData() {
+    // Refresh bot status
     this.botService.getBotStatus().subscribe({
       next: (status) => {
         this.botStatus = {
@@ -237,6 +208,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
         console.error('Error fetching bot status:', err);
       }
     });
+
+    // Refresh trade history
+    this.loadTradeHistory();
   }
 
   loadTradeHistory() {

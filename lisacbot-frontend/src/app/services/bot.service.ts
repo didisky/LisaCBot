@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, timer } from 'rxjs';
-import { tap, switchMap } from 'rxjs/operators';
+import { Observable, BehaviorSubject } from 'rxjs';
+import { tap } from 'rxjs/operators';
 import { BacktestResult } from '../models/backtest-result.model';
 import { Trade } from '../models/trade.model';
 
@@ -26,17 +26,7 @@ export class BotService {
   public status$ = this.statusSubject.asObservable();
 
   constructor(private http: HttpClient) {
-    // Start polling status every 10 seconds
-    this.startPolling();
-  }
-
-  private startPolling() {
-    timer(0, 10000).pipe(
-      switchMap(() => this.http.get<BotStatus>(`${this.apiUrl}/status`)),
-      tap(status => this.statusSubject.next(status))
-    ).subscribe({
-      error: (err) => console.error('Error fetching bot status:', err)
-    });
+    // Polling removed - status is now loaded manually on dashboard init and refresh
   }
 
   runBacktest(days?: number, balance?: number): Observable<BacktestResult> {
