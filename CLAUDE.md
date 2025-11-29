@@ -36,9 +36,13 @@ mvn spring-boot:run            # Run the application (http://localhost:8080)
 ```bash
 cd lisacbot-frontend
 npm install                    # Install dependencies
-ng serve                       # Run dev server (http://localhost:4200)
+ng serve                       # Run dev server with proxy (http://localhost:4200)
 ng build                       # Build for production
 ```
+
+**Important:** The frontend uses relative API URLs (`/api`) that work in both environments:
+- **Development (ng serve):** `proxy.conf.json` proxies `/api` to `http://localhost:8080`
+- **Docker:** Nginx proxies `/api` to backend container
 
 ## Configuration
 
