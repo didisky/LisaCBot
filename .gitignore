@@ -11,3 +11,15 @@ out/
 
 # PostgreSQL data
 postgres_data/
+
+# Environment variables (SECURITY: Never commit)
+.env
+.env.local
+.env.*.local
+
+# Docker volumes
+postgres_data/
+
+# Deployment backups
+backups/
+backup_*.sql
