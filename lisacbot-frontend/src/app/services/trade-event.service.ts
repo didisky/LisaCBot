@@ -6,7 +6,10 @@ import { Trade } from '../models/trade.model';
   providedIn: 'root'
 })
 export class TradeEventService {
-  private apiUrl = 'http://localhost:8080/api/trades/events';
+  // Use relative URL to work with both development and Docker deployments
+  // In dev (ng serve): proxied to localhost:8080 via proxy.conf.json
+  // In Docker: proxied to backend via Nginx
+  private apiUrl = '/api/trades/events';
   private eventSource: EventSource | null = null;
   private tradeSubject = new Subject<Trade>();
 

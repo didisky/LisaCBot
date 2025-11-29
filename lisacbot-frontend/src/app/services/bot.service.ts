@@ -18,7 +18,10 @@ export interface BotStatus {
   providedIn: 'root'
 })
 export class BotService {
-  private apiUrl = 'http://localhost:8080/api';
+  // Use relative URL to work with both development and Docker deployments
+  // In dev (ng serve): proxied to localhost:8080 via proxy.conf.json
+  // In Docker: proxied to backend via Nginx
+  private apiUrl = '/api';
   private statusSubject = new BehaviorSubject<BotStatus | null>(null);
   public status$ = this.statusSubject.asObservable();
 
