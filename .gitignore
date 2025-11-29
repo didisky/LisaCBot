@@ -8,3 +8,6 @@ out/
 
 # macOS
 .DS_Store
+
+# PostgreSQL data
+postgres_data/

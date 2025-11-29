@@ -19,8 +19,17 @@ The bot uses an "all-in" approach, holding either 100% USD or 100% BTC at any gi
 ### Backend (Spring Boot)
 - **Scheduled Price Monitoring**: Configurable polling interval for price checks
 - **Strategy-Based Trading**: Pluggable trading strategy interface
-- **Simple Moving Average (SMA)**: Built-in SMA crossover strategy implementation
+- **Multiple Trading Strategies**:
+  - Simple Moving Average (SMA)
+  - EMA + RSI
+  - MACD
+  - Composite Strategy (weighted voting of multiple strategies)
+- **Risk Management**:
+  - Trailing stop-loss (protects profits by following price upward)
+  - Take-profit (automatic profit taking at target percentage)
+- **Market Cycle Detection**: 6-phase cycle analysis (ACCUMULATION, MARKUP, BULL_MARKET, DECLINE, CRASH, UNKNOWN)
 - **Portfolio Tracking**: Real-time logging of balance, holdings, and total portfolio value
+- **Trade Persistence**: All trades stored in PostgreSQL database
 - **Backtesting**: Test strategies against historical data
 - **REST API**: Endpoints for status and backtesting
 
@@ -57,6 +66,7 @@ The bot uses an "all-in" approach, holding either 100% USD or 100% BTC at any gi
 ### Backend
 - Java 21
 - Maven 3.6+
+- Docker (for PostgreSQL)
 
 ### Frontend
 - Node.js 22+
@@ -80,17 +90,56 @@ npm install
 cd ..
 ```
 
+### Start PostgreSQL Database
+
+The bot requires PostgreSQL to store trade history. Start it using Docker:
+
+```bash
+./start-db.sh
+```
+
+This will start PostgreSQL in a Docker container with the following configuration:
+- Host: `localhost`
+- Port: `5432`
+- Database: `lisacbot`
+- User: `lisacbot`
+- Password: `lisacbot`
+
+To stop the database:
+```bash
+docker-compose down
+```
+
 ## Configuration
 
-Edit [application.properties](src/main/resources/application.properties) to configure the bot:
+Edit [application.properties](lisacbot-backend/src/main/resources/application.properties) to configure the bot:
 
 ```properties
 # Bot configuration
 bot.poll.interval.seconds=30        # How often to check prices (seconds)
-bot.strategy.sma.period=5           # SMA period for moving average calculation
+bot.initial.balance=1000.0          # Starting balance in USD
+
+# Risk management
+bot.trailing.stop.loss.enabled=true
+bot.trailing.stop.loss.percentage=5.0    # Trailing stop at 5% from peak
+bot.take.profit.enabled=true
+bot.take.profit.percentage=8.0           # Take profit at +8%
+
+# Strategy selection: sma, ema-rsi, macd, or composite
+bot.strategy.type=composite
+
+# Composite strategy configuration (weighted voting)
+bot.strategy.composite.strategies=sma,ema-rsi,macd
+bot.strategy.composite.weights=30,40,30           # Must sum to 100
+bot.strategy.composite.buy.threshold=0.5          # Buy when score >= 0.5
+bot.strategy.composite.sell.threshold=-0.5        # Sell when score <= -0.5
+
+# Market cycle detection
+bot.cycle.allowed=ACCUMULATION,MARKUP,BULL_MARKET  # Only trade in these cycles
+bot.cycle.update.interval.hours=24                 # Re-analyze cycle every 24h
 
 # Logging
-logging.level.com.lisacbot=INFO     # Log level
+logging.level.com.lisacbot=INFO
 ```
 
 ### Environment Variable Override
@@ -186,15 +235,33 @@ HOLD
 Portfolio value: $1007.89
 ```
 
-## Trading Strategy
+## Trading Strategies
 
-The default strategy is a Simple Moving Average (SMA) crossover:
-- Maintains a rolling window of recent prices (configurable period)
-- **BUY**: When current price crosses above the SMA
-- **SELL**: When current price crosses below the SMA
-- **HOLD**: Otherwise
+LisaCBot supports multiple trading strategies:
 
-You can implement custom strategies by creating a class that implements the [TradingStrategy](src/main/java/com/lisacbot/TradingStrategy.java) interface.
+### 1. Simple Moving Average (SMA)
+- Maintains a rolling window of recent prices
+- **BUY**: When price crosses above SMA
+- **SELL**: When price crosses below SMA
+
+### 2. EMA + RSI
+- Combines Exponential Moving Average with Relative Strength Index
+- **BUY**: Price above EMA AND RSI is oversold (< 30)
+- **SELL**: Price below EMA AND RSI is overbought (> 70)
+
+### 3. MACD (Moving Average Convergence Divergence)
+- Tracks fast EMA (12), slow EMA (26), and signal line (9)
+- **BUY**: MACD line crosses above signal line (bullish crossover)
+- **SELL**: MACD line crosses below signal line (bearish crossover)
+
+### 4. Composite Strategy (Default)
+- Combines multiple strategies using weighted voting
+- Each strategy votes BUY (+1), HOLD (0), or SELL (-1)
+- Final decision based on weighted score and thresholds
+- Example: SMA (30%), EMA-RSI (40%), MACD (30%)
+
+### Custom Strategies
+You can implement custom strategies by creating a class that implements the `TradingStrategy` interface in the domain layer.
 
 ## Disclaimer
 

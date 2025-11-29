@@ -1,11 +1,13 @@
 package com.lisacbot.domain.service;
 
 import com.lisacbot.domain.port.PriceProvider;
+import com.lisacbot.domain.port.TradeRepository;
 import com.lisacbot.domain.model.BotStatus;
 import com.lisacbot.domain.model.MarketCycle;
 import com.lisacbot.domain.model.Portfolio;
 import com.lisacbot.domain.model.Price;
 import com.lisacbot.domain.model.Signal;
+import com.lisacbot.domain.model.Trade;
 import com.lisacbot.domain.strategy.TradingStrategy;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
@@ -14,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +32,7 @@ public class TradingService {
     private final PriceProvider priceProvider;
     private final TradingStrategy strategy;
     private final MarketCycleDetector cycleDetector;
+    private final TradeRepository tradeRepository;
     private final Portfolio portfolio;
     private final boolean trailingStopLossEnabled;
     private final double trailingStopLossPercentage;
@@ -36,6 +40,7 @@ public class TradingService {
     private final double takeProfitPercentage;
     private final int cycleAnalysisDays;
     private final Set<MarketCycle> allowedCycles;
+    private final String strategyName;
 
     private Price lastPrice;
     private boolean running;
@@ -45,23 +50,27 @@ public class TradingService {
             PriceProvider priceProvider,
             TradingStrategy strategy,
             MarketCycleDetector cycleDetector,
+            TradeRepository tradeRepository,
             @Value("${bot.initial.balance}") double initialBalance,
             @Value("${bot.trailing.stop.loss.enabled}") boolean trailingStopLossEnabled,
             @Value("${bot.trailing.stop.loss.percentage}") double trailingStopLossPercentage,
             @Value("${bot.take.profit.enabled}") boolean takeProfitEnabled,
             @Value("${bot.take.profit.percentage}") double takeProfitPercentage,
             @Value("${bot.cycle.analysis.window.days}") int cycleAnalysisDays,
-            @Value("${bot.cycle.allowed}") String allowedCyclesConfig
+            @Value("${bot.cycle.allowed}") String allowedCyclesConfig,
+            @Value("${bot.strategy.type}") String strategyName
     ) {
         this.priceProvider = priceProvider;
         this.strategy = strategy;
         this.cycleDetector = cycleDetector;
+        this.tradeRepository = tradeRepository;
         this.portfolio = new Portfolio(initialBalance);
         this.trailingStopLossEnabled = trailingStopLossEnabled;
         this.trailingStopLossPercentage = trailingStopLossPercentage;
         this.takeProfitEnabled = takeProfitEnabled;
         this.takeProfitPercentage = takeProfitPercentage;
         this.cycleAnalysisDays = cycleAnalysisDays;
+        this.strategyName = strategyName;
 
         // Parse allowed cycles from comma-separated config
         this.allowedCycles = Arrays.stream(allowedCyclesConfig.split(","))
@@ -131,7 +140,7 @@ public class TradingService {
                 // If we have holdings, sell immediately
                 if (portfolio.hasHoldings() && lastPrice != null) {
                     log.warn("CYCLE PROTECTION: Selling holdings due to non-allowed market cycle");
-                    executeSignal(Signal.SELL, lastPrice.value(), portfolio);
+                    executeSignal(Signal.SELL, lastPrice.value(), portfolio, "Cycle protection");
                 }
             } else {
                 log.info("Trading is ALLOWED in current market cycle: {}", currentMarketCycle);
@@ -176,7 +185,7 @@ public class TradingService {
                     String.format("%.2f", highestPrice),
                     String.format("%.2f", price),
                     String.format("%.2f", profitLoss));
-            executeSignal(Signal.SELL, price, portfolio);
+            executeSignal(Signal.SELL, price, portfolio, "Trailing stop-loss");
             return Signal.SELL;
         }
 
@@ -184,7 +193,7 @@ public class TradingService {
         if (takeProfitEnabled && portfolio.shouldTriggerTakeProfit(price, takeProfitPercentage)) {
             double profit = portfolio.getCurrentProfitLossPercentage(price);
             log.info("TAKE-PROFIT TRIGGERED! Profit: +{}%", String.format("%.2f", profit));
-            executeSignal(Signal.SELL, price, portfolio);
+            executeSignal(Signal.SELL, price, portfolio, "Take profit");
             return Signal.SELL;
         }
 
@@ -195,7 +204,7 @@ public class TradingService {
             // If we somehow have holdings in a non-allowed cycle, sell them
             if (portfolio.hasHoldings()) {
                 log.warn("CYCLE PROTECTION: Selling holdings in non-allowed cycle");
-                executeSignal(Signal.SELL, price, portfolio);
+                executeSignal(Signal.SELL, price, portfolio, "Cycle protection");
                 return Signal.SELL;
             }
 
@@ -220,6 +229,14 @@ public class TradingService {
     }
 
     private void executeSignal(Signal signal, double price, Portfolio portfolio) {
+        executeSignal(signal, price, portfolio, "Strategy signal");
+    }
+
+    private void executeSignal(Signal signal, double price, Portfolio portfolio, String reason) {
+        double balanceBefore = portfolio.getBalance();
+        double holdingsBefore = portfolio.getHoldings();
+        Double profitLoss = null;
+
         switch (signal) {
             case BUY -> {
                 if (portfolio.hasBalance()) {
@@ -227,21 +244,31 @@ public class TradingService {
                     log.info("BUY: Bought {} BTC at ${}",
                             String.format("%.6f", portfolio.getHoldings()),
                             String.format("%.2f", price));
+
+                    // Persist trade (only for real trading, not backtest)
+                    if (portfolio == this.portfolio) {
+                        persistTrade(signal, price, portfolio.getHoldings(), balanceBefore, portfolio.getBalance(), null, reason);
+                    }
                 }
             }
             case SELL -> {
                 if (portfolio.hasHoldings()) {
-                    double profitLoss = portfolio.getCurrentProfitLossPercentage(price);
+                    profitLoss = portfolio.getCurrentProfitLossPercentage(price);
                     portfolio.sell(price);
                     log.info("SELL: Sold for ${} (P/L: {}%)",
                             String.format("%.2f", portfolio.getBalance()),
                             String.format("%.2f", profitLoss));
+
+                    // Persist trade (only for real trading, not backtest)
+                    if (portfolio == this.portfolio) {
+                        persistTrade(signal, price, holdingsBefore, balanceBefore, portfolio.getBalance(), profitLoss, reason);
+                    }
                 }
             }
             case HOLD -> {
                 log.info("HOLD");
                 if (portfolio.hasHoldings()) {
-                    double profitLoss = portfolio.getCurrentProfitLossPercentage(price);
+                    profitLoss = portfolio.getCurrentProfitLossPercentage(price);
                     log.info("Current P/L: {}%", String.format("%.2f", profitLoss));
                 }
             }
@@ -249,6 +276,24 @@ public class TradingService {
 
         double totalValue = portfolio.getTotalValue(price);
         log.info("Portfolio value: ${}", String.format("%.2f", totalValue));
+    }
+
+    private void persistTrade(Signal signal, double price, double quantity, double balanceBefore, double balanceAfter, Double profitLoss, String reason) {
+        Trade trade = new Trade(
+                null, // ID will be generated by database
+                LocalDateTime.now(),
+                signal,
+                price,
+                quantity,
+                balanceBefore,
+                balanceAfter,
+                profitLoss,
+                strategyName,
+                currentMarketCycle,
+                reason
+        );
+        tradeRepository.save(trade);
+        log.debug("Trade persisted: {}", trade);
     }
 
     public BotStatus getBotStatus() {
