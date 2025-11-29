@@ -66,16 +66,55 @@ Deux scripts sont fournis pour simplifier le déploiement :
 ./deploy-prod.sh rollback
 ```
 
+## Configuration des environnements
+
+Le projet utilise plusieurs fichiers de configuration :
+
+### Fichiers de configuration
+
+1. **`application.properties`** - Configuration Spring Boot (committée dans git)
+   - Contient les valeurs par défaut pour le développement local
+   - Utilise des variables d'environnement qui peuvent être écrasées
+
+2. **`.env`** - Configuration Docker (JAMAIS committée)
+   - Utilisé par `docker-compose.yml`
+   - Contient les secrets de production (mots de passe, etc.)
+
+3. **`.env.local`** - Configuration locale optionnelle (JAMAIS committée)
+   - Pour exécuter le backend hors Docker (avec `mvn spring-boot:run`)
+   - Écrase les valeurs de `application.properties`
+
+### Hiérarchie des configurations
+
+```
+application.properties (défauts)
+    ↓ (écrasé par)
+.env.local (développement local sans Docker)
+    ↓ (écrasé par)
+.env + docker-compose.yml (développement/production avec Docker)
+```
+
 ## Déploiement rapide
 
-### 1. Configuration
+### 1. Configuration pour Docker
 
 ```bash
-# Créer le fichier .env
+# Créer le fichier .env pour Docker
 cp .env.example .env
 
 # Éditer et définir le mot de passe PostgreSQL
 nano .env
+```
+
+### 1bis. Configuration pour développement local (sans Docker)
+
+```bash
+# Si vous voulez exécuter le backend avec 'mvn spring-boot:run'
+cp .env.local.example .env.local
+nano .env.local
+
+# Puis démarrer PostgreSQL localement
+# Et lancer : mvn spring-boot:run
 ```
 
 ### 2. Lancement avec le script

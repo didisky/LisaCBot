@@ -42,11 +42,37 @@ ng build                       # Build for production
 
 ## Configuration
 
-Backend properties in `lisacbot-backend/src/main/resources/application.properties` can be overridden via environment variables:
+### Configuration Files
+
+1. **application.properties** - Spring Boot defaults (committed to git)
+   - Located in `lisacbot-backend/src/main/resources/`
+   - Contains default values for local development
+   - Database credentials use environment variable placeholders
+
+2. **.env** - Docker configuration (NOT committed, in .gitignore)
+   - Used by docker-compose.yml
+   - Contains production secrets (passwords, etc.)
+   - Required for Docker deployment
+
+3. **.env.local** - Local development (NOT committed, in .gitignore)
+   - Optional file for running backend with `mvn spring-boot:run`
+   - Overrides application.properties values
+
+### Environment Variable Override Examples
 
 ```bash
+# Override bot configuration
 BOT_POLL_INTERVAL_SECONDS=10 mvn spring-boot:run
+
+# Override database configuration (local development)
+SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/lisacbot \
+SPRING_DATASOURCE_PASSWORD=mypassword \
+mvn spring-boot:run
 ```
+
+### Docker Deployment
+
+See DEPLOYMENT.md for full Docker deployment guide with automated scripts.
 
 ## Architecture
 
