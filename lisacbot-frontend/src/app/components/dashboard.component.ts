@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BotService } from '../services/bot.service';
+import { TradeEventService } from '../services/trade-event.service';
 import { Trade } from '../models/trade.model';
 import { Subscription } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import { trigger, state, style, transition, animate } from '@angular/animations';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -14,7 +16,18 @@ Chart.register(...registerables);
   standalone: true,
   imports: [CommonModule, BaseChartDirective],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.css']
+  styleUrls: ['./dashboard.component.css'],
+  animations: [
+    trigger('slideInOut', [
+      transition(':enter', [
+        style({ transform: 'translateY(-100%)', opacity: 0 }),
+        animate('300ms ease-out', style({ transform: 'translateY(0)', opacity: 1 }))
+      ]),
+      transition(':leave', [
+        animate('300ms ease-in', style({ transform: 'translateY(-100%)', opacity: 0 }))
+      ])
+    ])
+  ]
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
@@ -106,10 +119,16 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   };
 
+  // Notification for new trades
+  showNewTradeNotification = false;
+  newTradeMessage = '';
+
   private statusSubscription?: Subscription;
+  private tradeEventSubscription?: Subscription;
 
   constructor(
     private botService: BotService,
+    private tradeEventService: TradeEventService,
     private cdr: ChangeDetectorRef
   ) {}
 
@@ -145,6 +164,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Load trade history
     this.loadTradeHistory();
+
+    // Connect to SSE for real-time trade notifications
+    this.tradeEventService.connect();
+    this.tradeEventSubscription = this.tradeEventService.getTradeEvents().subscribe({
+      next: (trade) => {
+        console.log('🔔 New trade notification:', trade);
+        this.handleNewTrade(trade);
+      },
+      error: (err) => {
+        console.error('Error receiving trade event:', err);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -152,6 +183,36 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.statusSubscription) {
       this.statusSubscription.unsubscribe();
     }
+    if (this.tradeEventSubscription) {
+      this.tradeEventSubscription.unsubscribe();
+    }
+    // Disconnect from SSE
+    this.tradeEventService.disconnect();
+  }
+
+  handleNewTrade(trade: Trade) {
+    // Add trade to the beginning of the list
+    this.trades.unshift(trade);
+    this.displayedTrades = this.trades.slice(0, this.maxDisplayedTrades);
+
+    // Update trade markers on chart
+    this.updateTradeMarkers();
+
+    // Show notification
+    const profitLoss = trade.profitLossPercentage
+      ? ` (${trade.profitLossPercentage > 0 ? '+' : ''}${trade.profitLossPercentage.toFixed(2)}%)`
+      : '';
+    this.newTradeMessage = `${trade.type} at $${trade.price.toFixed(2)}${profitLoss}`;
+    this.showNewTradeNotification = true;
+
+    // Auto-hide notification after 5 seconds
+    setTimeout(() => {
+      this.showNewTradeNotification = false;
+      this.cdr.detectChanges();
+    }, 5000);
+
+    // Force change detection
+    this.cdr.detectChanges();
   }
 
   updatePriceHistory(price: number) {

@@ -33,6 +33,7 @@ public class TradingService {
     private final TradingStrategy strategy;
     private final MarketCycleDetector cycleDetector;
     private final TradeRepository tradeRepository;
+    private final TradeEventPublisher tradeEventPublisher;
     private final Portfolio portfolio;
     private final boolean trailingStopLossEnabled;
     private final double trailingStopLossPercentage;
@@ -51,6 +52,7 @@ public class TradingService {
             TradingStrategy strategy,
             MarketCycleDetector cycleDetector,
             TradeRepository tradeRepository,
+            TradeEventPublisher tradeEventPublisher,
             @Value("${bot.initial.balance}") double initialBalance,
             @Value("${bot.trailing.stop.loss.enabled}") boolean trailingStopLossEnabled,
             @Value("${bot.trailing.stop.loss.percentage}") double trailingStopLossPercentage,
@@ -64,6 +66,7 @@ public class TradingService {
         this.strategy = strategy;
         this.cycleDetector = cycleDetector;
         this.tradeRepository = tradeRepository;
+        this.tradeEventPublisher = tradeEventPublisher;
         this.portfolio = new Portfolio(initialBalance);
         this.trailingStopLossEnabled = trailingStopLossEnabled;
         this.trailingStopLossPercentage = trailingStopLossPercentage;
@@ -292,8 +295,11 @@ public class TradingService {
                 currentMarketCycle,
                 reason
         );
-        tradeRepository.save(trade);
-        log.debug("Trade persisted: {}", trade);
+        Trade savedTrade = tradeRepository.save(trade);
+        log.debug("Trade persisted: {}", savedTrade);
+
+        // Publish event for real-time notification
+        tradeEventPublisher.publishTradeEvent(savedTrade);
     }
 
     public BotStatus getBotStatus() {

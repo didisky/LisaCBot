@@ -1,0 +1,71 @@
+import { Injectable, NgZone } from '@angular/core';
+import { Observable, Subject } from 'rxjs';
+import { Trade } from '../models/trade.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TradeEventService {
+  private apiUrl = 'http://localhost:8080/api/trades/events';
+  private eventSource: EventSource | null = null;
+  private tradeSubject = new Subject<Trade>();
+
+  constructor(private zone: NgZone) {}
+
+  /**
+   * Connects to the SSE endpoint and returns an observable of trade events.
+   */
+  getTradeEvents(): Observable<Trade> {
+    return this.tradeSubject.asObservable();
+  }
+
+  /**
+   * Starts listening to SSE events from the backend.
+   */
+  connect(): void {
+    if (this.eventSource) {
+      console.warn('EventSource already connected');
+      return;
+    }
+
+    console.log('🔌 Connecting to trade events SSE...');
+    this.eventSource = new EventSource(this.apiUrl);
+
+    this.eventSource.addEventListener('trade', (event: MessageEvent) => {
+      this.zone.run(() => {
+        try {
+          const trade: Trade = JSON.parse(event.data);
+          console.log('📨 New trade event received:', trade);
+          this.tradeSubject.next(trade);
+        } catch (error) {
+          console.error('Error parsing trade event:', error);
+        }
+      });
+    });
+
+    this.eventSource.onerror = (error) => {
+      console.error('❌ SSE connection error:', error);
+      // Auto-reconnect after 5 seconds
+      setTimeout(() => {
+        console.log('🔄 Attempting to reconnect...');
+        this.disconnect();
+        this.connect();
+      }, 5000);
+    };
+
+    this.eventSource.onopen = () => {
+      console.log('✅ SSE connection established');
+    };
+  }
+
+  /**
+   * Closes the SSE connection.
+   */
+  disconnect(): void {
+    if (this.eventSource) {
+      console.log('🔌 Disconnecting from trade events SSE...');
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+}

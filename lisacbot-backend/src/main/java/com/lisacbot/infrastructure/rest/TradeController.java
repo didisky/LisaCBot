@@ -4,8 +4,10 @@ import com.lisacbot.domain.model.Trade;
 import com.lisacbot.domain.model.TradeMetrics;
 import com.lisacbot.domain.port.TradeRepository;
 import com.lisacbot.domain.service.MetricsService;
+import com.lisacbot.domain.service.TradeEventPublisher;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -20,10 +22,12 @@ public class TradeController {
 
     private final TradeRepository tradeRepository;
     private final MetricsService metricsService;
+    private final TradeEventPublisher tradeEventPublisher;
 
-    public TradeController(TradeRepository tradeRepository, MetricsService metricsService) {
+    public TradeController(TradeRepository tradeRepository, MetricsService metricsService, TradeEventPublisher tradeEventPublisher) {
         this.tradeRepository = tradeRepository;
         this.metricsService = metricsService;
+        this.tradeEventPublisher = tradeEventPublisher;
     }
 
     /**
@@ -59,5 +63,16 @@ public class TradeController {
     @GetMapping("/metrics")
     public TradeMetrics getMetrics() {
         return metricsService.calculateMetrics();
+    }
+
+    /**
+     * Server-Sent Events endpoint for real-time trade notifications.
+     * Clients can subscribe to this endpoint to receive trade events as they happen.
+     *
+     * @return SseEmitter for streaming trade events
+     */
+    @GetMapping("/events")
+    public SseEmitter streamTradeEvents() {
+        return tradeEventPublisher.createEmitter();
     }
 }
