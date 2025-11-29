@@ -83,9 +83,9 @@ backup_database() {
     mkdir -p "$BACKUP_DIR"
     BACKUP_FILE="$BACKUP_DIR/backup_${TIMESTAMP}.sql"
 
-    if docker-compose ps postgres | grep -q "Up"; then
+    if docker compose ps postgres | grep -q "Up"; then
         print_info "Creating database backup: $BACKUP_FILE"
-        docker-compose exec -T postgres pg_dump -U lisacbot lisacbot > "$BACKUP_FILE"
+        docker compose exec -T postgres pg_dump -U lisacbot lisacbot > "$BACKUP_FILE"
         print_success "Database backed up"
 
         # Keep only last 10 backups
@@ -134,13 +134,13 @@ deploy() {
     print_header "Building and Deploying"
 
     print_info "Building images (this may take a few minutes)..."
-    docker-compose build --no-cache
+    docker compose build --no-cache
 
     print_info "Stopping old containers..."
-    docker-compose down
+    docker compose down
 
     print_info "Starting new containers..."
-    docker-compose up -d
+    docker compose up -d
 
     print_success "Deployment completed!"
 }
@@ -153,7 +153,7 @@ health_check() {
     sleep 10
 
     # Check PostgreSQL
-    if docker-compose exec -T postgres pg_isready -U lisacbot > /dev/null 2>&1; then
+    if docker compose exec -T postgres pg_isready -U lisacbot > /dev/null 2>&1; then
         print_success "PostgreSQL is healthy"
     else
         print_error "PostgreSQL is not responding"
@@ -190,7 +190,7 @@ show_summary() {
 
     echo ""
     print_info "Service Status:"
-    docker-compose ps
+    docker compose ps
 
     echo ""
     print_info "Current Version:"
@@ -223,10 +223,10 @@ rollback() {
 
     if [[ $REPLY == "yes" ]]; then
         print_info "Restoring database..."
-        cat "$LATEST_BACKUP" | docker-compose exec -T postgres psql -U lisacbot lisacbot
+        cat "$LATEST_BACKUP" | docker compose exec -T postgres psql -U lisacbot lisacbot
 
         print_info "Restarting backend..."
-        docker-compose restart backend
+        docker compose restart backend
 
         print_success "Rollback completed"
     else
@@ -250,7 +250,7 @@ main() {
         show_summary
     else
         print_error "Health check failed!"
-        print_warning "Check logs with: docker-compose logs"
+        print_warning "Check logs with: docker compose logs"
         print_info "To rollback database: ./deploy-prod.sh rollback"
         exit 1
     fi

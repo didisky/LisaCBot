@@ -62,14 +62,14 @@ deploy_backend() {
     check_docker
 
     print_info "Building backend image..."
-    docker-compose build --no-cache backend
+    docker compose build --no-cache backend
 
     print_info "Starting backend..."
-    docker-compose up -d backend
+    docker compose up -d backend
 
     print_success "Backend deployed!"
     print_info "Checking logs..."
-    docker-compose logs --tail=50 backend
+    docker compose logs --tail=50 backend
 }
 
 # Deploy frontend only
@@ -79,14 +79,14 @@ deploy_frontend() {
     check_docker
 
     print_info "Building frontend image..."
-    docker-compose build --no-cache frontend
+    docker compose build --no-cache frontend
 
     print_info "Starting frontend..."
-    docker-compose up -d frontend
+    docker compose up -d frontend
 
     print_success "Frontend deployed!"
     print_info "Checking logs..."
-    docker-compose logs --tail=50 frontend
+    docker compose logs --tail=50 frontend
 }
 
 # Deploy everything
@@ -96,16 +96,16 @@ deploy_all() {
     check_docker
 
     print_info "Building all images..."
-    docker-compose build --no-cache
+    docker compose build --no-cache
 
     print_info "Starting all services..."
-    docker-compose up -d
+    docker compose up -d
 
     print_success "All services deployed!"
     sleep 3
 
     print_info "Service status:"
-    docker-compose ps
+    docker compose ps
 }
 
 # Quick rebuild (with cache)
@@ -114,14 +114,14 @@ quick_deploy() {
 
     if [ -z "$SERVICE" ]; then
         print_header "Quick Rebuild - All Services"
-        docker-compose up -d --build
+        docker compose up -d --build
     else
         print_header "Quick Rebuild - $SERVICE"
-        docker-compose up -d --build "$SERVICE"
+        docker compose up -d --build "$SERVICE"
     fi
 
     print_success "Quick rebuild completed!"
-    docker-compose ps
+    docker compose ps
 }
 
 # Show logs
@@ -130,10 +130,10 @@ show_logs() {
 
     if [ -z "$SERVICE" ]; then
         print_header "Showing All Logs"
-        docker-compose logs -f
+        docker compose logs -f
     else
         print_header "Showing $SERVICE Logs"
-        docker-compose logs -f "$SERVICE"
+        docker compose logs -f "$SERVICE"
     fi
 }
 
@@ -143,11 +143,11 @@ stop_services() {
 
     if [ -z "$SERVICE" ]; then
         print_header "Stopping All Services"
-        docker-compose down
+        docker compose down
         print_success "All services stopped"
     else
         print_header "Stopping $SERVICE"
-        docker-compose stop "$SERVICE"
+        docker compose stop "$SERVICE"
         print_success "$SERVICE stopped"
     fi
 }
@@ -158,11 +158,11 @@ restart_services() {
 
     if [ -z "$SERVICE" ]; then
         print_header "Restarting All Services"
-        docker-compose restart
+        docker compose restart
         print_success "All services restarted"
     else
         print_header "Restarting $SERVICE"
-        docker-compose restart "$SERVICE"
+        docker compose restart "$SERVICE"
         print_success "$SERVICE restarted"
     fi
 }
@@ -170,7 +170,7 @@ restart_services() {
 # Status
 show_status() {
     print_header "Service Status"
-    docker-compose ps
+    docker compose ps
 
     echo ""
     print_header "Resource Usage"
@@ -184,7 +184,7 @@ clean_all() {
 
     if [[ $REPLY == "yes" ]]; then
         print_header "Cleaning Everything"
-        docker-compose down -v
+        docker compose down -v
         print_success "Cleanup completed"
     else
         print_info "Cleanup cancelled"
@@ -198,7 +198,7 @@ backup_db() {
     BACKUP_FILE="backup_$(date +%Y%m%d_%H%M%S).sql"
 
     print_info "Creating backup: $BACKUP_FILE"
-    docker-compose exec -T postgres pg_dump -U lisacbot lisacbot > "$BACKUP_FILE"
+    docker compose exec -T postgres pg_dump -U lisacbot lisacbot > "$BACKUP_FILE"
 
     print_success "Database backed up to $BACKUP_FILE"
 }
@@ -223,7 +223,7 @@ restore_db() {
 
     if [[ $REPLY == "yes" ]]; then
         print_info "Restoring from $BACKUP_FILE..."
-        cat "$BACKUP_FILE" | docker-compose exec -T postgres psql -U lisacbot lisacbot
+        cat "$BACKUP_FILE" | docker compose exec -T postgres psql -U lisacbot lisacbot
         print_success "Database restored"
     else
         print_info "Restore cancelled"
