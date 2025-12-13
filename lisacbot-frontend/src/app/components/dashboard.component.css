@@ -102,18 +102,52 @@ h2 {
   50% { opacity: 0.5; }
 }
 
-.btn-refresh {
-  background-color: #007bff;
+.control-buttons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-refresh,
+.btn-start,
+.btn-stop {
   color: white;
   border: none;
   padding: 0.5rem 1.5rem;
   border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s;
+  transition: all 0.3s;
+  font-weight: 500;
 }
 
-.btn-refresh:hover {
+.btn-refresh {
+  background-color: #007bff;
+}
+
+.btn-refresh:hover:not(:disabled) {
   background-color: #0056b3;
+}
+
+.btn-start {
+  background-color: #28a745;
+}
+
+.btn-start:hover:not(:disabled) {
+  background-color: #218838;
+}
+
+.btn-stop {
+  background-color: #dc3545;
+}
+
+.btn-stop:hover:not(:disabled) {
+  background-color: #c82333;
+}
+
+.btn-start:disabled,
+.btn-stop:disabled,
+.btn-refresh:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stats-grid {

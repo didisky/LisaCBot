@@ -15,7 +15,11 @@
       <span class="dot"></span>
       <span>{{ botStatus.running ? 'Active' : 'Stopped' }}</span>
     </div>
-    <button (click)="refreshData()" class="btn-refresh">Refresh</button>
+    <div class="control-buttons">
+      <button (click)="startBot()" class="btn-start" [disabled]="botStatus.running">Start Bot</button>
+      <button (click)="stopBot()" class="btn-stop" [disabled]="!botStatus.running">Stop Bot</button>
+      <button (click)="refreshData()" class="btn-refresh">Refresh</button>
+    </div>
   </div>
 
   <div class="stats-grid">

@@ -50,4 +50,12 @@ export class BotService {
   getTradeHistory(): Observable<Trade[]> {
     return this.http.get<Trade[]>(`${this.apiUrl}/trades`);
   }
+
+  startBot(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/bot/start`, {});
+  }
+
+  stopBot(): Observable<any> {
+    return this.http.post(`${this.apiUrl}/bot/stop`, {});
+  }
 }

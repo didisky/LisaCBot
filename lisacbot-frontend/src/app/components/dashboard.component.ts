@@ -281,4 +281,30 @@ export class DashboardComponent implements OnInit, OnDestroy {
         return '';
     }
   }
+
+  startBot() {
+    this.botService.startBot().subscribe({
+      next: (response) => {
+        console.log('Bot started:', response);
+        // Refresh status to update UI
+        this.refreshData();
+      },
+      error: (err) => {
+        console.error('Error starting bot:', err);
+      }
+    });
+  }
+
+  stopBot() {
+    this.botService.stopBot().subscribe({
+      next: (response) => {
+        console.log('Bot stopped:', response);
+        // Refresh status to update UI
+        this.refreshData();
+      },
+      error: (err) => {
+        console.error('Error stopping bot:', err);
+      }
+    });
+  }
 }

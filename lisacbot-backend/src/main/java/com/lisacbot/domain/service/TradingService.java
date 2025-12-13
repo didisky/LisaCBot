@@ -86,9 +86,8 @@ public class TradingService {
     }
 
     @PostConstruct
-    public void start() {
-        running = true;
-        log.info("LisaCBot started");
+    public void initialize() {
+        log.info("LisaCBot initialized (not started)");
         log.info("Starting balance: ${}", portfolio.getBalance());
         if (trailingStopLossEnabled) {
             log.info("Trailing stop-loss enabled: {}%", trailingStopLossPercentage);
@@ -102,7 +101,30 @@ public class TradingService {
         updateMarketCycle();
     }
 
+    public synchronized void start() {
+        if (!running) {
+            running = true;
+            log.info("LisaCBot STARTED - Trading enabled");
+        } else {
+            log.warn("LisaCBot already running");
+        }
+    }
+
+    public synchronized void stop() {
+        if (running) {
+            running = false;
+            log.info("LisaCBot STOPPED - Trading disabled");
+        } else {
+            log.warn("LisaCBot already stopped");
+        }
+    }
+
     public void executeTradingCycle() {
+        if (!running) {
+            log.debug("Trading cycle skipped - bot is stopped");
+            return;
+        }
+
         try {
             lastPrice = priceProvider.getCurrentPrice();
             executeTradingCycle(lastPrice.value());
