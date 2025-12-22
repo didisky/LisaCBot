@@ -9,12 +9,15 @@
         name="type"
         [(ngModel)]="config.type"
         class="form-control">
-        <option *ngIf="isLoading" value="" disabled>Loading strategies...</option>
+        <option *ngIf="isLoading && strategies.length === 0" value="" disabled>Loading strategies...</option>
         <option *ngFor="let strategy of strategies" [value]="strategy.value">
           {{ strategy.label }}
         </option>
       </select>
       <small *ngIf="!isLoading && config.type">Currently active: {{ config.type }}</small>
+      <small style="display: block; margin-top: 5px; color: #666;">
+        Debug: {{ strategies.length }} strategies loaded
+      </small>
     </div>
 
     <div class="form-group">
