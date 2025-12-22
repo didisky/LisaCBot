@@ -14,7 +14,7 @@
           {{ strategy.label }}
         </option>
       </select>
-      <small *ngIf="!isLoading && config.type">Currently active: {{ config.type }}</small>
+      <small *ngIf="!isLoading && activeStrategy">Currently active: {{ activeStrategy }}</small>
       <small style="display: block; margin-top: 5px; color: #666;">
         Debug: {{ strategies.length }} strategies loaded
       </small>

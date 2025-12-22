@@ -20,6 +20,7 @@ export class StrategyConfigComponent implements OnInit {
 
   strategies: Array<{value: string, label: string, description?: string}> = [];
   isLoading = true;
+  activeStrategy: string = ''; // The strategy currently running on the bot
 
   constructor(
     private botService: BotService,
@@ -65,9 +66,11 @@ export class StrategyConfigComponent implements OnInit {
       next: (status) => {
         console.log('Bot status received:', status);
         if (status.strategyName) {
-          // Set the current strategy as default
+          // Store the currently active strategy
+          this.activeStrategy = status.strategyName;
+          // Also set it as the default selected value in dropdown
           this.config.type = status.strategyName;
-          console.log('Set active strategy to:', status.strategyName);
+          console.log('Active strategy:', status.strategyName);
         } else {
           console.warn('No strategyName in bot status');
         }
