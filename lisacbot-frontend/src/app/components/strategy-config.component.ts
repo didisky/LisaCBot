@@ -19,15 +19,24 @@ export class StrategyConfigComponent implements OnInit {
   };
 
   strategies: Array<{value: string, label: string, description?: string}> = [];
+  isLoading = true;
 
   constructor(private botService: BotService) {}
 
   ngOnInit() {
-    // Fetch available strategies from backend
+    // Load both strategies and current bot status
+    this.loadStrategiesAndStatus();
+  }
+
+  loadStrategiesAndStatus() {
+    // Fetch available strategies
     this.botService.getAvailableStrategies().subscribe({
       next: (strategies) => {
         this.strategies = strategies;
         console.log('Loaded strategies:', strategies);
+
+        // After strategies are loaded, fetch current bot status to set active strategy
+        this.loadCurrentStrategy();
       },
       error: (err) => {
         console.error('Error loading strategies:', err);
@@ -35,6 +44,25 @@ export class StrategyConfigComponent implements OnInit {
         this.strategies = [
           { value: 'SMA', label: 'Simple Moving Average (SMA)' }
         ];
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadCurrentStrategy() {
+    // Fetch current bot status to get active strategy
+    this.botService.getBotStatus().subscribe({
+      next: (status) => {
+        if (status.strategyName) {
+          // Set the current strategy as default
+          this.config.type = status.strategyName;
+          console.log('Current active strategy:', status.strategyName);
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading current strategy:', err);
+        this.isLoading = false;
       }
     });
   }
