@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StrategyConfig } from '../models/strategy-config.model';
@@ -21,7 +21,10 @@ export class StrategyConfigComponent implements OnInit {
   strategies: Array<{value: string, label: string, description?: string}> = [];
   isLoading = true;
 
-  constructor(private botService: BotService) {}
+  constructor(
+    private botService: BotService,
+    private cdr: ChangeDetectorRef
+  ) {}
 
   ngOnInit() {
     // Load both strategies and current bot status
@@ -37,6 +40,8 @@ export class StrategyConfigComponent implements OnInit {
         if (strategies && strategies.length > 0) {
           this.strategies = strategies;
           console.log('Loaded strategies from backend:', strategies);
+          // Force change detection to update the view
+          this.cdr.detectChanges();
         } else {
           console.warn('No strategies returned from backend');
         }
@@ -47,6 +52,7 @@ export class StrategyConfigComponent implements OnInit {
       error: (err) => {
         console.error('Error loading strategies from backend:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
         // Still try to load current strategy even if strategy list fails
         this.loadCurrentStrategy();
       }
@@ -66,10 +72,13 @@ export class StrategyConfigComponent implements OnInit {
           console.warn('No strategyName in bot status');
         }
         this.isLoading = false;
+        // Force change detection to update the view
+        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error loading bot status:', err);
         this.isLoading = false;
+        this.cdr.detectChanges();
       }
     });
   }
