@@ -29,22 +29,26 @@ export class StrategyConfigComponent implements OnInit {
   }
 
   loadStrategiesAndStatus() {
-    // Fetch available strategies
+    this.isLoading = true;
+
+    // Fetch available strategies from backend
     this.botService.getAvailableStrategies().subscribe({
       next: (strategies) => {
-        this.strategies = strategies;
-        console.log('Loaded strategies:', strategies);
+        if (strategies && strategies.length > 0) {
+          this.strategies = strategies;
+          console.log('Loaded strategies from backend:', strategies);
+        } else {
+          console.warn('No strategies returned from backend');
+        }
 
         // After strategies are loaded, fetch current bot status to set active strategy
         this.loadCurrentStrategy();
       },
       error: (err) => {
-        console.error('Error loading strategies:', err);
-        // Fallback to default strategies if API fails
-        this.strategies = [
-          { value: 'SMA', label: 'Simple Moving Average (SMA)' }
-        ];
+        console.error('Error loading strategies from backend:', err);
         this.isLoading = false;
+        // Still try to load current strategy even if strategy list fails
+        this.loadCurrentStrategy();
       }
     });
   }
@@ -53,15 +57,18 @@ export class StrategyConfigComponent implements OnInit {
     // Fetch current bot status to get active strategy
     this.botService.getBotStatus().subscribe({
       next: (status) => {
+        console.log('Bot status received:', status);
         if (status.strategyName) {
           // Set the current strategy as default
           this.config.type = status.strategyName;
-          console.log('Current active strategy:', status.strategyName);
+          console.log('Set active strategy to:', status.strategyName);
+        } else {
+          console.warn('No strategyName in bot status');
         }
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Error loading current strategy:', err);
+        console.error('Error loading bot status:', err);
         this.isLoading = false;
       }
     });
