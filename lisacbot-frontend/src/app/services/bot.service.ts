@@ -59,4 +59,8 @@ export class BotService {
   stopBot(): Observable<any> {
     return this.http.post(`${this.apiUrl}/bot/stop`, {});
   }
+
+  getAvailableStrategies(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/config/strategies`);
+  }
 }
