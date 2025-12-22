@@ -12,6 +12,7 @@ export interface BotStatus {
   lastPrice: number;
   totalValue: number;
   marketCycle?: any;  // Optional market cycle information
+  strategyName?: string;  // Active trading strategy
 }
 
 @Injectable({

@@ -9,6 +9,7 @@ public record BotStatus(
         double holdings,
         double lastPrice,
         double totalValue,
-        MarketCycle marketCycle
+        MarketCycle marketCycle,
+        String strategyName
 ) {
 }

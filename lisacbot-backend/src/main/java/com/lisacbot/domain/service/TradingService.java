@@ -334,7 +334,8 @@ public class TradingService {
                 portfolio.getHoldings(),
                 currentPrice,
                 totalValue,
-                currentMarketCycle
+                currentMarketCycle,
+                strategyName
         );
     }
 }

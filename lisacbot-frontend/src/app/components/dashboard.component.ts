@@ -39,6 +39,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     currentPrice: 0,
     totalValue: 1000.00,
     marketCycle: '',
+    strategyName: '',
     lastUpdate: new Date()
   };
 
@@ -201,6 +202,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
           currentPrice: status.lastPrice,
           totalValue: status.totalValue,
           marketCycle: status.marketCycle || '',
+          strategyName: status.strategyName || '',
           lastUpdate: new Date()
         };
       },
