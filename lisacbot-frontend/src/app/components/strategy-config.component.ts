@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StrategyConfig } from '../models/strategy-config.model';
 import { BotService } from '../services/bot.service';
+import { forkJoin } from 'rxjs';
 
 @Component({
   selector: 'app-strategy-config',
@@ -28,8 +29,9 @@ export class StrategyConfigComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    // Load both strategies and current bot status
+    // Load strategies, current bot status, and configuration
     this.loadStrategiesAndStatus();
+    this.loadCurrentConfiguration();
   }
 
   loadStrategiesAndStatus() {
@@ -86,24 +88,59 @@ export class StrategyConfigComponent implements OnInit {
     });
   }
 
-  onSubmit() {
-    console.log('Applying configuration:', this.config);
-
-    // Update strategy on the backend
-    this.botService.updateStrategy(this.config.type).subscribe({
-      next: (response) => {
-        console.log('Strategy update response:', response);
-        if (response.success) {
-          alert(`Strategy updated successfully to ${response.strategy}!`);
-          // Reload current strategy to reflect the change
-          this.loadCurrentStrategy();
-        } else {
-          alert(`Failed to update strategy: ${response.message}`);
+  loadCurrentConfiguration() {
+    // Fetch current configuration to populate poll interval
+    this.botService.getCurrentConfiguration().subscribe({
+      next: (config) => {
+        console.log('Current configuration received:', config);
+        if (config.pollIntervalSeconds) {
+          this.config.pollIntervalSeconds = config.pollIntervalSeconds;
+          this.cdr.detectChanges();
         }
       },
       error: (err) => {
-        console.error('Error updating strategy:', err);
-        alert('Failed to update strategy. Please check the console for details.');
+        console.error('Error loading configuration:', err);
+      }
+    });
+  }
+
+  onSubmit() {
+    console.log('Applying configuration:', this.config);
+
+    // Update both strategy and poll interval on the backend
+    forkJoin({
+      strategy: this.botService.updateStrategy(this.config.type),
+      pollInterval: this.botService.updatePollInterval(this.config.pollIntervalSeconds)
+    }).subscribe({
+      next: (responses) => {
+        console.log('Configuration update responses:', responses);
+
+        const successMessages: string[] = [];
+        const errorMessages: string[] = [];
+
+        if (responses.strategy.success) {
+          successMessages.push(`Strategy: ${responses.strategy.strategy}`);
+        } else {
+          errorMessages.push(`Strategy: ${responses.strategy.message}`);
+        }
+
+        if (responses.pollInterval.success) {
+          successMessages.push(`Poll Interval: ${responses.pollInterval.pollIntervalSeconds}s`);
+        } else {
+          errorMessages.push(`Poll Interval: ${responses.pollInterval.message}`);
+        }
+
+        if (errorMessages.length === 0) {
+          alert(`Configuration updated successfully!\n${successMessages.join('\n')}`);
+          // Reload current strategy to reflect the change
+          this.loadCurrentStrategy();
+        } else {
+          alert(`Configuration update completed with errors:\n${errorMessages.join('\n')}`);
+        }
+      },
+      error: (err) => {
+        console.error('Error updating configuration:', err);
+        alert('Failed to update configuration. Please check the console for details.');
       }
     });
   }

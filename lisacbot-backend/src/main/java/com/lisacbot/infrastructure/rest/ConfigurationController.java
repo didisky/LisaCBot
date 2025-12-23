@@ -19,6 +19,7 @@ import java.util.Map;
 public class ConfigurationController {
 
     private final TradingService tradingService;
+    private final com.lisacbot.infrastructure.config.BotScheduler botScheduler;
 
     // Bot configuration
     @Value("${bot.poll.interval.seconds}")
@@ -61,8 +62,9 @@ public class ConfigurationController {
     @Value("${bot.strategy.composite.sell.threshold:-0.5}")
     private double compositeSellThreshold;
 
-    public ConfigurationController(TradingService tradingService) {
+    public ConfigurationController(TradingService tradingService, com.lisacbot.infrastructure.config.BotScheduler botScheduler) {
         this.tradingService = tradingService;
+        this.botScheduler = botScheduler;
     }
 
     /**
@@ -102,7 +104,7 @@ public class ConfigurationController {
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentConfiguration() {
         return ResponseEntity.ok(Map.of(
-                "pollIntervalSeconds", pollIntervalSeconds,
+                "pollIntervalSeconds", botScheduler.getCurrentPollInterval(),
                 "smaPeriod", smaPeriod,
                 "emaPeriod", emaPeriod,
                 "rsiPeriod", rsiPeriod,
@@ -134,6 +136,36 @@ public class ConfigurationController {
                     "success", true,
                     "message", "Strategy updated successfully to " + strategyType.toUpperCase(),
                     "strategy", strategyType.toUpperCase()
+            ));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * Updates the bot polling interval dynamically.
+     */
+    @PostMapping("/poll-interval")
+    public ResponseEntity<Map<String, Object>> updatePollInterval(@RequestBody Map<String, Integer> request) {
+        Integer intervalSeconds = request.get("pollIntervalSeconds");
+
+        if (intervalSeconds == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Poll interval is required"
+            ));
+        }
+
+        try {
+            botScheduler.updatePollInterval(intervalSeconds);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Poll interval updated successfully to " + intervalSeconds + " seconds",
+                    "pollIntervalSeconds", intervalSeconds
             ));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of(
