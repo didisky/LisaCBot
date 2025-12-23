@@ -70,6 +70,22 @@
         <div class="stat-value">{{ botStatus.strategyName || 'N/A' }}</div>
       </div>
     </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">⏱️</div>
+      <div class="stat-content">
+        <div class="stat-label">Cycle Frequency</div>
+        <div class="stat-value">{{ botConfig.pollIntervalSeconds }}s</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-content">
+        <div class="stat-label">SMA Period</div>
+        <div class="stat-value">{{ botConfig.smaPeriod }} pts</div>
+      </div>
+    </div>
   </div>
 
   <div class="chart-panel">

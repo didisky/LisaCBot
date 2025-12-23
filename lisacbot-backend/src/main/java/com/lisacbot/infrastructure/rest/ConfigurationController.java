@@ -20,6 +20,10 @@ public class ConfigurationController {
 
     private final TradingService tradingService;
 
+    // Bot configuration
+    @Value("${bot.poll.interval.seconds}")
+    private int pollIntervalSeconds;
+
     // Strategy parameters from configuration
     @Value("${bot.strategy.sma.period}")
     private int smaPeriod;
@@ -90,6 +94,22 @@ public class ConfigurationController {
         );
 
         return ResponseEntity.ok(strategies);
+    }
+
+    /**
+     * Returns the current bot configuration.
+     */
+    @GetMapping("/current")
+    public ResponseEntity<Map<String, Object>> getCurrentConfiguration() {
+        return ResponseEntity.ok(Map.of(
+                "pollIntervalSeconds", pollIntervalSeconds,
+                "smaPeriod", smaPeriod,
+                "emaPeriod", emaPeriod,
+                "rsiPeriod", rsiPeriod,
+                "macdFastPeriod", macdFastPeriod,
+                "macdSlowPeriod", macdSlowPeriod,
+                "macdSignalPeriod", macdSignalPeriod
+        ));
     }
 
     /**

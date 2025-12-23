@@ -43,6 +43,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
     lastUpdate: new Date()
   };
 
+  botConfig = {
+    pollIntervalSeconds: 30,
+    smaPeriod: 5
+  };
+
   // Price history for the chart (last 20 data points)
   priceHistory: Array<{time: Date, price: number}> = [];
   maxDataPoints = 20;
@@ -164,6 +169,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Load trade history
     this.loadTradeHistory();
 
+    // Load bot configuration
+    this.loadBotConfiguration();
+
     // Connect to SSE for real-time trade notifications
     this.tradeEventService.connect();
     this.tradeEventSubscription = this.tradeEventService.getTradeEvents().subscribe({
@@ -254,6 +262,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error fetching trade history:', err);
+      }
+    });
+  }
+
+  loadBotConfiguration() {
+    this.botService.getCurrentConfiguration().subscribe({
+      next: (config) => {
+        this.botConfig = {
+          pollIntervalSeconds: config.pollIntervalSeconds,
+          smaPeriod: config.smaPeriod
+        };
+      },
+      error: (err) => {
+        console.error('Error fetching bot configuration:', err);
       }
     });
   }
