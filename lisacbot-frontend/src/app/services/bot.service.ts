@@ -72,6 +72,10 @@ export class BotService {
     return this.http.post(`${this.apiUrl}/config/poll-interval`, { pollIntervalSeconds });
   }
 
+  updateConfigurationParameters(params: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/config/parameters`, params);
+  }
+
   getCurrentConfiguration(): Observable<any> {
     return this.http.get(`${this.apiUrl}/config/current`);
   }

@@ -2,6 +2,9 @@
   <h2>Trading Strategy Configuration</h2>
 
   <form (ngSubmit)="onSubmit()" #configForm="ngForm">
+    <!-- General Configuration -->
+    <h3>General Settings</h3>
+
     <div class="form-group">
       <label for="strategyType">Strategy Type:</label>
       <select
@@ -18,21 +21,7 @@
     </div>
 
     <div class="form-group">
-      <label for="smaPeriod">SMA Period:</label>
-      <input
-        type="number"
-        id="smaPeriod"
-        name="smaPeriod"
-        [(ngModel)]="config.smaPeriod"
-        min="2"
-        max="50"
-        class="form-control"
-        required>
-      <small>Number of price points to average (2-50)</small>
-    </div>
-
-    <div class="form-group">
-      <label for="pollInterval">Poll Interval (seconds):</label>
+      <label for="pollInterval">Poll Interval:</label>
       <input
         type="number"
         id="pollInterval"
@@ -45,6 +34,160 @@
       <small>How often to check prices (10-300 seconds)</small>
     </div>
 
+    <!-- SMA Strategy Configuration -->
+    <h3>SMA Strategy Parameters</h3>
+
+    <div class="form-group">
+      <label for="smaPeriod">SMA Period:</label>
+      <input
+        type="number"
+        id="smaPeriod"
+        name="smaPeriod"
+        [(ngModel)]="config.smaPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Number of price points to average for Simple Moving Average (2-50)</small>
+    </div>
+
+    <!-- EMA-RSI Strategy Configuration -->
+    <h3>EMA-RSI Strategy Parameters</h3>
+
+    <div class="form-group">
+      <label for="emaPeriod">EMA Period:</label>
+      <input
+        type="number"
+        id="emaPeriod"
+        name="emaPeriod"
+        [(ngModel)]="config.emaPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Exponential Moving Average period (2-50)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="rsiPeriod">RSI Period:</label>
+      <input
+        type="number"
+        id="rsiPeriod"
+        name="rsiPeriod"
+        [(ngModel)]="config.rsiPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Relative Strength Index calculation period (2-50)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="rsiOversold">RSI Oversold Threshold:</label>
+      <input
+        type="number"
+        id="rsiOversold"
+        name="rsiOversold"
+        [(ngModel)]="config.rsiOversold"
+        min="10"
+        max="50"
+        class="form-control"
+        required>
+      <small>RSI level indicating oversold condition (10-50, typically 30)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="rsiOverbought">RSI Overbought Threshold:</label>
+      <input
+        type="number"
+        id="rsiOverbought"
+        name="rsiOverbought"
+        [(ngModel)]="config.rsiOverbought"
+        min="50"
+        max="90"
+        class="form-control"
+        required>
+      <small>RSI level indicating overbought condition (50-90, typically 70)</small>
+    </div>
+
+    <!-- MACD Strategy Configuration -->
+    <h3>MACD Strategy Parameters</h3>
+
+    <div class="form-group">
+      <label for="macdFastPeriod">MACD Fast Period:</label>
+      <input
+        type="number"
+        id="macdFastPeriod"
+        name="macdFastPeriod"
+        [(ngModel)]="config.macdFastPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Fast EMA period for MACD (2-50, typically 12)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="macdSlowPeriod">MACD Slow Period:</label>
+      <input
+        type="number"
+        id="macdSlowPeriod"
+        name="macdSlowPeriod"
+        [(ngModel)]="config.macdSlowPeriod"
+        min="10"
+        max="100"
+        class="form-control"
+        required>
+      <small>Slow EMA period for MACD (10-100, typically 26)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="macdSignalPeriod">MACD Signal Period:</label>
+      <input
+        type="number"
+        id="macdSignalPeriod"
+        name="macdSignalPeriod"
+        [(ngModel)]="config.macdSignalPeriod"
+        min="2"
+        max="50"
+        class="form-control"
+        required>
+      <small>Signal line EMA period for MACD (2-50, typically 9)</small>
+    </div>
+
+    <!-- Composite Strategy Configuration -->
+    <h3>Composite Strategy Parameters</h3>
+
+    <div class="form-group">
+      <label for="compositeBuyThreshold">Composite Buy Threshold:</label>
+      <input
+        type="number"
+        id="compositeBuyThreshold"
+        name="compositeBuyThreshold"
+        [(ngModel)]="config.compositeBuyThreshold"
+        min="-1"
+        max="1"
+        step="0.1"
+        class="form-control"
+        required>
+      <small>Weighted vote threshold to trigger buy signal (-1 to 1, typically 0.5)</small>
+    </div>
+
+    <div class="form-group">
+      <label for="compositeSellThreshold">Composite Sell Threshold:</label>
+      <input
+        type="number"
+        id="compositeSellThreshold"
+        name="compositeSellThreshold"
+        [(ngModel)]="config.compositeSellThreshold"
+        min="-1"
+        max="1"
+        step="0.1"
+        class="form-control"
+        required>
+      <small>Weighted vote threshold to trigger sell signal (-1 to 1, typically -0.5)</small>
+    </div>
+
     <button type="submit" class="btn-primary" [disabled]="!configForm.form.valid">
       Apply Configuration
     </button>
@@ -52,8 +195,25 @@
 
   <div class="info-box">
     <h3>Current Configuration</h3>
-    <p><strong>Strategy:</strong> {{ config.type.toUpperCase() }}</p>
-    <p><strong>SMA Period:</strong> {{ config.smaPeriod }} data points</p>
-    <p><strong>Check Interval:</strong> {{ config.pollIntervalSeconds }} seconds</p>
+    <p><strong>Active Strategy:</strong> {{ activeStrategy || currentConfig.type.toUpperCase() }}</p>
+    <p><strong>Poll Interval:</strong> {{ currentConfig.pollIntervalSeconds }} seconds</p>
+
+    <h4>SMA Parameters</h4>
+    <p><strong>SMA Period:</strong> {{ currentConfig.smaPeriod }} data points</p>
+
+    <h4>EMA-RSI Parameters</h4>
+    <p><strong>EMA Period:</strong> {{ currentConfig.emaPeriod }}</p>
+    <p><strong>RSI Period:</strong> {{ currentConfig.rsiPeriod }}</p>
+    <p><strong>RSI Oversold:</strong> {{ currentConfig.rsiOversold }}</p>
+    <p><strong>RSI Overbought:</strong> {{ currentConfig.rsiOverbought }}</p>
+
+    <h4>MACD Parameters</h4>
+    <p><strong>Fast Period:</strong> {{ currentConfig.macdFastPeriod }}</p>
+    <p><strong>Slow Period:</strong> {{ currentConfig.macdSlowPeriod }}</p>
+    <p><strong>Signal Period:</strong> {{ currentConfig.macdSignalPeriod }}</p>
+
+    <h4>Composite Parameters</h4>
+    <p><strong>Buy Threshold:</strong> {{ currentConfig.compositeBuyThreshold }}</p>
+    <p><strong>Sell Threshold:</strong> {{ currentConfig.compositeSellThreshold }}</p>
   </div>
 </div>

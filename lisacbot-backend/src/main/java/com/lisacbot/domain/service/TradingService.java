@@ -42,6 +42,7 @@ public class TradingService {
     private final int cycleAnalysisDays;
     private final Set<MarketCycle> allowedCycles;
     private String strategyName; // Non-final to allow runtime strategy name updates
+    private final com.lisacbot.infrastructure.config.ConfigurationService configurationService;
 
     private Price lastPrice;
     private boolean running;
@@ -53,6 +54,7 @@ public class TradingService {
             MarketCycleDetector cycleDetector,
             TradeRepository tradeRepository,
             TradeEventPublisher tradeEventPublisher,
+            com.lisacbot.infrastructure.config.ConfigurationService configurationService,
             @Value("${bot.initial.balance}") double initialBalance,
             @Value("${bot.trailing.stop.loss.enabled}") boolean trailingStopLossEnabled,
             @Value("${bot.trailing.stop.loss.percentage}") double trailingStopLossPercentage,
@@ -67,6 +69,7 @@ public class TradingService {
         this.cycleDetector = cycleDetector;
         this.tradeRepository = tradeRepository;
         this.tradeEventPublisher = tradeEventPublisher;
+        this.configurationService = configurationService;
         this.portfolio = new Portfolio(initialBalance);
         this.trailingStopLossEnabled = trailingStopLossEnabled;
         this.trailingStopLossPercentage = trailingStopLossPercentage;
@@ -195,6 +198,19 @@ public class TradingService {
      * @return the signal that was executed (BUY, SELL, or HOLD)
      */
     public Signal executeTradingCycle(double price, Portfolio portfolio) {
+        log.info("========== Trading Cycle ==========");
+        log.info("Strategy: {}", strategyName);
+        log.info("Parameters - SMA: {}, EMA: {}, RSI: {} (Oversold: {}, Overbought: {}), MACD: {}/{}/{}, Composite: Buy={}, Sell={}",
+                configurationService.getSmaPeriod(),
+                configurationService.getEmaPeriod(),
+                configurationService.getRsiPeriod(),
+                configurationService.getRsiOversold(),
+                configurationService.getRsiOverbought(),
+                configurationService.getMacdFastPeriod(),
+                configurationService.getMacdSlowPeriod(),
+                configurationService.getMacdSignalPeriod(),
+                configurationService.getCompositeBuyThreshold(),
+                configurationService.getCompositeSellThreshold());
         log.info("BTC price: ${}", String.format("%.2f", price));
 
         // Update highest price for trailing stop-loss calculation

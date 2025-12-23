@@ -20,51 +20,23 @@ public class ConfigurationController {
 
     private final TradingService tradingService;
     private final com.lisacbot.infrastructure.config.BotScheduler botScheduler;
+    private final com.lisacbot.infrastructure.config.ConfigurationService configurationService;
 
-    // Bot configuration
-    @Value("${bot.poll.interval.seconds}")
-    private int pollIntervalSeconds;
-
-    // Strategy parameters from configuration
-    @Value("${bot.strategy.sma.period}")
-    private int smaPeriod;
-
-    @Value("${bot.strategy.ema.period}")
-    private int emaPeriod;
-
-    @Value("${bot.strategy.rsi.period}")
-    private int rsiPeriod;
-
-    @Value("${bot.strategy.rsi.oversold}")
-    private int rsiOversold;
-
-    @Value("${bot.strategy.rsi.overbought}")
-    private int rsiOverbought;
-
-    @Value("${bot.strategy.macd.fast.period}")
-    private int macdFastPeriod;
-
-    @Value("${bot.strategy.macd.slow.period}")
-    private int macdSlowPeriod;
-
-    @Value("${bot.strategy.macd.signal.period}")
-    private int macdSignalPeriod;
-
+    // Composite strategy configuration (still from properties as these define the strategy structure)
     @Value("${bot.strategy.composite.strategies:}")
     private String compositeStrategies;
 
     @Value("${bot.strategy.composite.weights:}")
     private String compositeWeights;
 
-    @Value("${bot.strategy.composite.buy.threshold:0.5}")
-    private double compositeBuyThreshold;
-
-    @Value("${bot.strategy.composite.sell.threshold:-0.5}")
-    private double compositeSellThreshold;
-
-    public ConfigurationController(TradingService tradingService, com.lisacbot.infrastructure.config.BotScheduler botScheduler) {
+    public ConfigurationController(
+            TradingService tradingService,
+            com.lisacbot.infrastructure.config.BotScheduler botScheduler,
+            com.lisacbot.infrastructure.config.ConfigurationService configurationService
+    ) {
         this.tradingService = tradingService;
         this.botScheduler = botScheduler;
+        this.configurationService = configurationService;
     }
 
     /**
@@ -103,15 +75,20 @@ public class ConfigurationController {
      */
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentConfiguration() {
-        return ResponseEntity.ok(Map.of(
-                "pollIntervalSeconds", botScheduler.getCurrentPollInterval(),
-                "smaPeriod", smaPeriod,
-                "emaPeriod", emaPeriod,
-                "rsiPeriod", rsiPeriod,
-                "macdFastPeriod", macdFastPeriod,
-                "macdSlowPeriod", macdSlowPeriod,
-                "macdSignalPeriod", macdSignalPeriod
-        ));
+        Map<String, Object> config = new java.util.HashMap<>();
+        config.put("pollIntervalSeconds", botScheduler.getCurrentPollInterval());
+        config.put("smaPeriod", configurationService.getSmaPeriod());
+        config.put("emaPeriod", configurationService.getEmaPeriod());
+        config.put("rsiPeriod", configurationService.getRsiPeriod());
+        config.put("rsiOversold", configurationService.getRsiOversold());
+        config.put("rsiOverbought", configurationService.getRsiOverbought());
+        config.put("macdFastPeriod", configurationService.getMacdFastPeriod());
+        config.put("macdSlowPeriod", configurationService.getMacdSlowPeriod());
+        config.put("macdSignalPeriod", configurationService.getMacdSignalPeriod());
+        config.put("compositeBuyThreshold", configurationService.getCompositeBuyThreshold());
+        config.put("compositeSellThreshold", configurationService.getCompositeSellThreshold());
+
+        return ResponseEntity.ok(config);
     }
 
     /**
@@ -175,11 +152,55 @@ public class ConfigurationController {
         }
     }
 
+    /**
+     * Updates all strategy configuration parameters dynamically.
+     */
+    @PostMapping("/parameters")
+    public ResponseEntity<Map<String, Object>> updateParameters(@RequestBody Map<String, Object> request) {
+        try {
+            int smaPeriod = ((Number) request.get("smaPeriod")).intValue();
+            int emaPeriod = ((Number) request.get("emaPeriod")).intValue();
+            int rsiPeriod = ((Number) request.get("rsiPeriod")).intValue();
+            int rsiOversold = ((Number) request.get("rsiOversold")).intValue();
+            int rsiOverbought = ((Number) request.get("rsiOverbought")).intValue();
+            int macdFastPeriod = ((Number) request.get("macdFastPeriod")).intValue();
+            int macdSlowPeriod = ((Number) request.get("macdSlowPeriod")).intValue();
+            int macdSignalPeriod = ((Number) request.get("macdSignalPeriod")).intValue();
+            double compositeBuyThreshold = ((Number) request.get("compositeBuyThreshold")).doubleValue();
+            double compositeSellThreshold = ((Number) request.get("compositeSellThreshold")).doubleValue();
+
+            configurationService.updateConfiguration(
+                    smaPeriod, emaPeriod, rsiPeriod, rsiOversold, rsiOverbought,
+                    macdFastPeriod, macdSlowPeriod, macdSignalPeriod,
+                    compositeBuyThreshold, compositeSellThreshold
+            );
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Configuration parameters updated successfully"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Failed to update parameters: " + e.getMessage()
+            ));
+        }
+    }
+
     private TradingStrategy createStrategyByType(String strategyType) {
         return switch (strategyType) {
-            case "sma" -> new SimpleMovingAverageStrategy(smaPeriod);
-            case "ema-rsi" -> new EmaRsiStrategy(emaPeriod, rsiPeriod, rsiOversold, rsiOverbought);
-            case "macd" -> new MacdStrategy(macdFastPeriod, macdSlowPeriod, macdSignalPeriod);
+            case "sma" -> new SimpleMovingAverageStrategy(configurationService.getSmaPeriod());
+            case "ema-rsi" -> new EmaRsiStrategy(
+                    configurationService.getEmaPeriod(),
+                    configurationService.getRsiPeriod(),
+                    configurationService.getRsiOversold(),
+                    configurationService.getRsiOverbought()
+            );
+            case "macd" -> new MacdStrategy(
+                    configurationService.getMacdFastPeriod(),
+                    configurationService.getMacdSlowPeriod(),
+                    configurationService.getMacdSignalPeriod()
+            );
             case "composite" -> createCompositeStrategy();
             default -> throw new IllegalArgumentException(
                     "Unknown strategy type: " + strategyType +
@@ -208,14 +229,27 @@ public class ConfigurationController {
             weightedStrategies.add(new CompositeStrategy.WeightedStrategy(strategy, weight, strategyName.toUpperCase()));
         }
 
-        return new CompositeStrategy(weightedStrategies, compositeBuyThreshold, compositeSellThreshold);
+        return new CompositeStrategy(
+                weightedStrategies,
+                configurationService.getCompositeBuyThreshold(),
+                configurationService.getCompositeSellThreshold()
+        );
     }
 
     private TradingStrategy createStrategyByName(String name) {
         return switch (name.toLowerCase()) {
-            case "sma" -> new SimpleMovingAverageStrategy(smaPeriod);
-            case "ema-rsi" -> new EmaRsiStrategy(emaPeriod, rsiPeriod, rsiOversold, rsiOverbought);
-            case "macd" -> new MacdStrategy(macdFastPeriod, macdSlowPeriod, macdSignalPeriod);
+            case "sma" -> new SimpleMovingAverageStrategy(configurationService.getSmaPeriod());
+            case "ema-rsi" -> new EmaRsiStrategy(
+                    configurationService.getEmaPeriod(),
+                    configurationService.getRsiPeriod(),
+                    configurationService.getRsiOversold(),
+                    configurationService.getRsiOverbought()
+            );
+            case "macd" -> new MacdStrategy(
+                    configurationService.getMacdFastPeriod(),
+                    configurationService.getMacdSlowPeriod(),
+                    configurationService.getMacdSignalPeriod()
+            );
             default -> throw new IllegalArgumentException(
                     "Unknown strategy name in composite: " + name +
                     ". Supported: sma, ema-rsi, macd"
