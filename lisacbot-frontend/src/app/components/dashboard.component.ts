@@ -94,6 +94,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
         mode: 'point',
         intersect: true,
         callbacks: {
+          title: (context: any) => {
+            // Format tooltip title with date and time
+            const timestamp = context[0].parsed.x;
+            const date = new Date(timestamp);
+            return date.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit'
+            });
+          },
           label: (context: any) => {
             const label = context.dataset.label || '';
             const value = context.parsed.y;
@@ -104,10 +116,23 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     scales: {
       x: {
+        type: 'linear',
         display: true,
         title: {
           display: true,
-          text: 'Time'
+          text: 'Date & Time'
+        },
+        ticks: {
+          callback: (value: any) => {
+            // Format x-axis labels to show date and time
+            const date = new Date(value);
+            return date.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            });
+          }
         }
       },
       y: {
@@ -238,18 +263,18 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.lineChartData.datasets[0].data = [];
     this.lineChartData.datasets[1].data = [];
 
-    // Add trade markers to chart
-    this.trades.forEach(trade => {
-      const tradeTime = new Date(trade.timestamp);
-      const timeLabel = tradeTime.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      });
+    // Sort trades from oldest to newest
+    const sortedTrades = [...this.trades].sort((a, b) => {
+      return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    });
 
-      // Create data point with x/y coordinates
+    // Add trade markers to chart
+    sortedTrades.forEach(trade => {
+      const tradeTime = new Date(trade.timestamp);
+
+      // Create data point with x/y coordinates using timestamp
       const dataPoint = {
-        x: timeLabel,
+        x: tradeTime.getTime(), // Use timestamp for proper time-series
         y: trade.price
       };
 
