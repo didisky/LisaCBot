@@ -87,7 +87,24 @@ export class StrategyConfigComponent implements OnInit {
   }
 
   onSubmit() {
-    console.log('Configuration updated:', this.config);
-    alert('Configuration will be saved! (Backend endpoint needed)');
+    console.log('Applying configuration:', this.config);
+
+    // Update strategy on the backend
+    this.botService.updateStrategy(this.config.type).subscribe({
+      next: (response) => {
+        console.log('Strategy update response:', response);
+        if (response.success) {
+          alert(`Strategy updated successfully to ${response.strategy}!`);
+          // Reload current strategy to reflect the change
+          this.loadCurrentStrategy();
+        } else {
+          alert(`Failed to update strategy: ${response.message}`);
+        }
+      },
+      error: (err) => {
+        console.error('Error updating strategy:', err);
+        alert('Failed to update strategy. Please check the console for details.');
+      }
+    });
   }
 }

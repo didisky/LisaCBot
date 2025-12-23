@@ -63,4 +63,8 @@ export class BotService {
   getAvailableStrategies(): Observable<any[]> {
     return this.http.get<any[]>(`${this.apiUrl}/config/strategies`);
   }
+
+  updateStrategy(strategyType: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/config/strategy`, { type: strategyType });
+  }
 }

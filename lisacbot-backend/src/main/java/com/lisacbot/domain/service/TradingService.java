@@ -30,7 +30,7 @@ public class TradingService {
     private static final Logger log = LoggerFactory.getLogger(TradingService.class);
 
     private final PriceProvider priceProvider;
-    private final TradingStrategy strategy;
+    private TradingStrategy strategy; // Non-final to allow runtime strategy switching
     private final MarketCycleDetector cycleDetector;
     private final TradeRepository tradeRepository;
     private final TradeEventPublisher tradeEventPublisher;
@@ -41,7 +41,7 @@ public class TradingService {
     private final double takeProfitPercentage;
     private final int cycleAnalysisDays;
     private final Set<MarketCycle> allowedCycles;
-    private final String strategyName;
+    private String strategyName; // Non-final to allow runtime strategy name updates
 
     private Price lastPrice;
     private boolean running;
@@ -337,5 +337,19 @@ public class TradingService {
                 currentMarketCycle,
                 strategyName
         );
+    }
+
+    /**
+     * Updates the trading strategy at runtime.
+     * This allows dynamic strategy switching without restarting the bot.
+     *
+     * @param newStrategy the new strategy to use
+     * @param newStrategyName the name of the new strategy
+     */
+    public synchronized void updateStrategy(TradingStrategy newStrategy, String newStrategyName) {
+        log.info("Updating trading strategy from {} to {}", this.strategyName, newStrategyName);
+        this.strategy = newStrategy;
+        this.strategyName = newStrategyName;
+        log.info("Trading strategy updated successfully");
     }
 }
