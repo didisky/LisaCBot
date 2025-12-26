@@ -31,6 +31,7 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults()) // Use existing CORS config from WebConfig
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll() // Public auth endpoints
+                        .requestMatchers("/api/status").permitAll() // Public health check for Render
                         .anyRequest().authenticated() // All other endpoints require authentication
                 )
                 .sessionManagement(session -> session
