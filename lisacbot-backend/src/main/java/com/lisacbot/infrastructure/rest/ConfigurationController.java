@@ -15,7 +15,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/config")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost"})
 public class ConfigurationController {
 
     private final TradingService tradingService;

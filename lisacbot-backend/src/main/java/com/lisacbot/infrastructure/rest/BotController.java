@@ -11,7 +11,6 @@ import java.util.Map;
  */
 @RestController
 @RequestMapping("/api/bot")
-@CrossOrigin(origins = "http://localhost:4200")
 public class BotController {
 
     private final TradingService tradingService;
