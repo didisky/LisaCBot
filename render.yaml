@@ -1,0 +1,67 @@
+services:
+  # PostgreSQL Database
+  - type: pserv
+    name: lisacbot-db
+    env: docker
+    plan: free
+    region: frankfurt
+    databases:
+      - name: lisacbot
+        databaseName: lisacbot
+        user: lisacbot
+
+  # Spring Boot Backend
+  - type: web
+    name: lisacbot-backend
+    env: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./lisacbot-backend/Dockerfile
+    dockerContext: ./lisacbot-backend
+    healthCheckPath: /api/status
+    envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: lisacbot-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: lisacbot-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: lisacbot-db
+          property: password
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+      - key: BOT_POLL_INTERVAL_SECONDS
+        value: "60"
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_PASSWORD
+        sync: false  # À définir manuellement dans Render Dashboard
+      - key: JWT_SECRET
+        sync: false  # À définir manuellement dans Render Dashboard
+      - key: CORS_ALLOWED_ORIGINS
+        fromService:
+          type: web
+          name: lisacbot-frontend
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: JAVA_OPTS
+        value: "-Xmx512m -Xms256m"
+
+  # Angular Frontend with Nginx
+  - type: web
+    name: lisacbot-frontend
+    env: docker
+    region: frankfurt
+    plan: free
+    dockerfilePath: ./lisacbot-frontend/Dockerfile
+    dockerContext: ./lisacbot-frontend
+    healthCheckPath: /health
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: lisacbot-backend
+          envVarKey: RENDER_EXTERNAL_URL
