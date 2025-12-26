@@ -1,6 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { Trade } from '../models/trade.model';
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,10 @@ export class TradeEventService {
   private eventSource: EventSource | null = null;
   private tradeSubject = new Subject<Trade>();
 
-  constructor(private zone: NgZone) {}
+  constructor(
+    private zone: NgZone,
+    private authService: AuthService
+  ) {}
 
   /**
    * Connects to the SSE endpoint and returns an observable of trade events.
@@ -31,8 +35,12 @@ export class TradeEventService {
       return;
     }
 
+    // Get JWT token and add as query parameter (EventSource can't send custom headers)
+    const token = this.authService.getToken();
+    const urlWithToken = token ? `${this.apiUrl}?token=${encodeURIComponent(token)}` : this.apiUrl;
+
     console.log('🔌 Connecting to trade events SSE...');
-    this.eventSource = new EventSource(this.apiUrl);
+    this.eventSource = new EventSource(urlWithToken);
 
     this.eventSource.addEventListener('trade', (event: MessageEvent) => {
       this.zone.run(() => {
