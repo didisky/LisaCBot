@@ -1,15 +1,12 @@
-services:
+databases:
   # PostgreSQL Database
-  - type: pserv
-    name: lisacbot-db
-    env: docker
+  - name: lisacbot-db
+    databaseName: lisacbot
+    user: lisacbot
     plan: free
     region: frankfurt
-    databases:
-      - name: lisacbot
-        databaseName: lisacbot
-        user: lisacbot
 
+services:
   # Spring Boot Backend
   - type: web
     name: lisacbot-backend
