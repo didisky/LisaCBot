@@ -150,6 +150,77 @@ You can override any property using environment variables:
 BOT_POLL_INTERVAL_SECONDS=10 mvn spring-boot:run
 ```
 
+## Authentication & Security
+
+LisaCBot includes JWT-based authentication to secure access to the dashboard and API.
+
+### Default Credentials
+
+**⚠️ IMPORTANT: Change these immediately in production!**
+
+- **Username:** `admin`
+- **Password:** `admin`
+
+### Security Features
+
+- **JWT Tokens**: Stateless authentication with 24-hour token expiration
+- **BCrypt Password Hashing**: Passwords are never stored in plain text
+- **Protected Routes**: All dashboard routes require authentication
+- **Automatic Token Management**: Frontend automatically includes JWT token in API requests
+
+### Changing Credentials
+
+#### Option 1: Environment Variables (Recommended for Production)
+
+Set environment variables before starting the application:
+
+```bash
+ADMIN_USERNAME=myusername ADMIN_PASSWORD=mySecurePassword123 mvn spring-boot:run
+```
+
+For Docker deployments, add to your `.env` file:
+
+```bash
+ADMIN_USERNAME=myusername
+ADMIN_PASSWORD=mySecurePassword123
+JWT_SECRET=your-secret-key-minimum-256-bits-for-hs256-algorithm
+```
+
+#### Option 2: Change Password from Dashboard
+
+1. Log in to the dashboard at `http://localhost:4200`
+2. Click on "Password" in the navigation bar
+3. Enter your current password and new password
+4. Click "Change Password"
+
+#### Option 3: Direct Database Update
+
+If you need to reset the password:
+
+```bash
+# Connect to PostgreSQL
+psql -U lisacbot -d lisacbot
+
+# Delete the existing user
+DELETE FROM users WHERE username = 'admin';
+
+# Restart the app with new credentials
+ADMIN_USERNAME=newuser ADMIN_PASSWORD=newpass mvn spring-boot:run
+```
+
+### Security Warnings
+
+When using default credentials, you'll see this warning on startup:
+
+```
+========================================================
+  SECURITY WARNING: Using default credentials!
+  Username: admin / Password: admin
+  CHANGE THESE IMMEDIATELY in production!
+  Set ADMIN_USERNAME and ADMIN_PASSWORD env variables
+========================================================
+```
+
 ## Running the Application
 
 ### Quick Start (macOS)

@@ -1,5 +1,5 @@
 <div class="app-container">
-  <nav class="navbar">
+  <nav class="navbar" *ngIf="authService.isAuthenticated()">
     <div class="nav-brand">
       <h1>{{ title }}</h1>
     </div>
@@ -13,6 +13,12 @@
       <a routerLink="/backtest" routerLinkActive="active">
         <span class="icon">📈</span> Backtest
       </a>
+      <a routerLink="/change-password" routerLinkActive="active">
+        <span class="icon">🔒</span> Password
+      </a>
+      <button class="logout-btn" (click)="logout()">
+        <span class="icon">🚪</span> Logout
+      </button>
     </div>
   </nav>
 
@@ -20,7 +26,7 @@
     <router-outlet></router-outlet>
   </main>
 
-  <footer class="footer">
+  <footer class="footer" *ngIf="authService.isAuthenticated()">
     <p>LisaCBot - Crypto Trading Bot Dashboard | Built with Angular & Spring Boot</p>
   </footer>
 </div>
