@@ -83,8 +83,22 @@ export class BacktestComponent implements OnInit {
       },
       error: (err) => {
         console.error('❌ Backtest error:', err);
-        this.error = 'Failed to run backtest: ' + (err.error?.message || err.message || 'Unknown error');
-        this.addLog(`ERROR: ${err.error?.message || err.message || 'Unknown error'}`);
+        console.error('❌ Error status:', err.status);
+        console.error('❌ Error details:', err.error);
+
+        let errorMsg = 'Unknown error';
+        if (err.status === 401) {
+          errorMsg = 'Authentication failed. Please log in again.';
+        } else if (err.status === 403) {
+          errorMsg = 'Access forbidden. Check your permissions.';
+        } else if (err.status === 0) {
+          errorMsg = 'Cannot connect to backend. Check network connection.';
+        } else {
+          errorMsg = err.error?.message || err.message || `HTTP ${err.status} error`;
+        }
+
+        this.error = 'Failed to run backtest: ' + errorMsg;
+        this.addLog(`ERROR [${err.status}]: ${errorMsg}`);
         this.loading = false;
         this.cdr.detectChanges();
       },
