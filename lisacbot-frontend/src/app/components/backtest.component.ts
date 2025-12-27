@@ -1,4 +1,4 @@
-import { Component, ChangeDetectorRef } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BotService } from '../services/bot.service';
@@ -12,7 +12,7 @@ import { BacktestConfig } from '../models/strategy-config.model';
   templateUrl: './backtest.component.html',
   styleUrls: ['./backtest.component.css']
 })
-export class BacktestComponent {
+export class BacktestComponent implements OnInit {
   config: BacktestConfig = {
     days: 30,
     initialBalance: 1000
@@ -24,10 +24,38 @@ export class BacktestComponent {
   logs: string[] = [];
   Math = Math; // Expose Math to template
 
+  // Current strategy information
+  currentStrategyName: string = '';
+  currentStrategyParameters: { [key: string]: string } = {};
+
   constructor(
     private botService: BotService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  ngOnInit() {
+    this.loadCurrentStrategy();
+  }
+
+  loadCurrentStrategy() {
+    console.log('🔵 Loading current strategy...');
+    this.botService.getCurrentConfiguration().subscribe({
+      next: (config) => {
+        console.log('✅ Strategy config received:', config);
+        this.currentStrategyName = config.strategyName || 'Unknown';
+        this.currentStrategyParameters = config.strategyParameters || {};
+        console.log('📊 Strategy name:', this.currentStrategyName);
+        console.log('📊 Strategy parameters:', this.currentStrategyParameters);
+        this.cdr.detectChanges(); // Force change detection
+      },
+      error: (err) => {
+        console.error('❌ Failed to load current strategy:', err);
+        // Set a fallback so the card still shows
+        this.currentStrategyName = 'Unknown';
+        this.currentStrategyParameters = {};
+      }
+    });
+  }
 
   runBacktest() {
     this.loading = true;
@@ -86,6 +114,14 @@ export class BacktestComponent {
   getParametersArray(): Array<{key: string, value: string}> {
     if (!this.result || !this.result.strategyParameters) return [];
     return Object.entries(this.result.strategyParameters).map(([key, value]) => ({
+      key,
+      value
+    }));
+  }
+
+  getCurrentParametersArray(): Array<{key: string, value: string}> {
+    if (!this.currentStrategyParameters) return [];
+    return Object.entries(this.currentStrategyParameters).map(([key, value]) => ({
       key,
       value
     }));

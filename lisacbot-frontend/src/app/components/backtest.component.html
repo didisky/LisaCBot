@@ -1,6 +1,27 @@
 <div class="backtest-container">
   <h2>Strategy Backtest</h2>
 
+  <!-- Current Strategy Card -->
+  <div class="current-strategy-card" *ngIf="currentStrategyName">
+    <h3>⚙️ Strategy to Test</h3>
+    <div class="strategy-preview">
+      <div class="strategy-name-preview">
+        <span class="label">Current Strategy:</span>
+        <span class="value strategy-badge-preview">{{ currentStrategyName.toUpperCase() }}</span>
+      </div>
+      <div class="strategy-parameters-preview" *ngIf="getCurrentParametersArray().length > 0">
+        <span class="label">Parameters:</span>
+        <div class="params-preview-grid">
+          <div *ngFor="let param of getCurrentParametersArray()" class="param-preview-item">
+            <span class="param-name">{{ param.key }}:</span>
+            <span class="param-value">{{ param.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="info-note">💡 This backtest will use your current active strategy configuration</p>
+  </div>
+
   <div class="backtest-form">
     <div class="form-group">
       <label for="days">Backtest Period (days):</label>

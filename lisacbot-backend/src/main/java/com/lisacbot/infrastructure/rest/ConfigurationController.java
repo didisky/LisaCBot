@@ -87,6 +87,10 @@ public class ConfigurationController {
         config.put("compositeBuyThreshold", configurationService.getCompositeBuyThreshold());
         config.put("compositeSellThreshold", configurationService.getCompositeSellThreshold());
 
+        // Add current strategy information
+        config.put("strategyName", tradingService.getStrategyName());
+        config.put("strategyParameters", tradingService.getStrategyParameters());
+
         return ResponseEntity.ok(config);
     }
 
