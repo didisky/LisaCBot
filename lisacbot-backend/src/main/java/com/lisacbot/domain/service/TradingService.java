@@ -261,6 +261,40 @@ public class TradingService {
     }
 
     /**
+     * Executes a trading cycle for backtesting purposes.
+     * This method skips the current market cycle check since backtests should test the strategy
+     * independently of current real-time market conditions.
+     * It still performs trailing stop-loss and take-profit checks.
+     *
+     * @param price the current price to use for trading decisions
+     * @param portfolio the portfolio to operate on
+     * @return the signal that was executed (BUY, SELL, or HOLD)
+     */
+    public Signal executeTradingCycleForBacktest(double price, Portfolio portfolio) {
+        // Update highest price for trailing stop-loss calculation
+        portfolio.updateHighestPrice(price);
+
+        // Risk management checks (priority over strategy)
+
+        // 1. Check trailing stop-loss (protect against losses and secure profits)
+        if (trailingStopLossEnabled && portfolio.shouldTriggerTrailingStopLoss(price, trailingStopLossPercentage)) {
+            executeSignal(Signal.SELL, price, portfolio, "Trailing stop-loss");
+            return Signal.SELL;
+        }
+
+        // 2. Check take-profit (secure gains)
+        if (takeProfitEnabled && portfolio.shouldTriggerTakeProfit(price, takeProfitPercentage)) {
+            executeSignal(Signal.SELL, price, portfolio, "Take profit");
+            return Signal.SELL;
+        }
+
+        // 3. Normal strategy analysis (no market cycle check for backtests)
+        Signal signal = strategy.analyze(price);
+        executeSignal(signal, price, portfolio);
+        return signal;
+    }
+
+    /**
      * Executes a trading cycle with the service's own portfolio.
      *
      * @param price the current price

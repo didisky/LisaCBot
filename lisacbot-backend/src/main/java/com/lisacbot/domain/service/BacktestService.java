@@ -62,35 +62,31 @@ public class BacktestService {
         Portfolio backtestPortfolio = new Portfolio(initialBalance);
 
         // Detect the market cycle at the start of the backtest period
-        // This gives a realistic simulation of the market conditions during the backtest
+        // This is for informational purposes only - backtest runs independently of current market conditions
         MarketCycle backtestCycle = cycleDetector.detectCycle(historicalPrices);
         log.info("Backtest period market cycle detected: {}", backtestCycle);
-        log.info("NOTE: Backtest will respect current allowed cycles configuration");
 
         int buyTrades = 0;
         int sellTrades = 0;
         List<Trade> trades = new ArrayList<>();
         String strategyName = tradingService.getStrategyName();
 
-        // Log the current real-time market cycle being used for trading decisions
-        log.warn("⚠️ IMPORTANT: Backtest uses CURRENT real-time market cycle for trading decisions!");
-        log.warn("⚠️ Current real-time market cycle: {}", tradingService.getBotStatus().marketCycle());
-        log.warn("⚠️ Historical backtest period cycle: {}", backtestCycle);
-        log.warn("⚠️ If current cycle is not allowed, ALL backtest trades will be blocked!");
+        log.info("Backtest will test strategy independently of current market cycle");
+        log.info("Historical backtest period cycle: {}", backtestCycle);
 
         // Calculate the time interval between price points for realistic timestamps
         LocalDateTime startTime = LocalDateTime.now().minusDays(days);
         long intervalMinutes = (days * 24 * 60) / Math.max(1, historicalPrices.size());
 
         // Execute trading cycle for each historical price point
-        // This reuses the core trading logic including stop-loss, take-profit, and cycle checks from TradingService
-        // The cycle check uses the current real-time cycle, which represents the strategy configuration being tested
+        // Uses backtest-specific method that skips current market cycle check
+        // Still performs trailing stop-loss and take-profit checks
         for (int i = 0; i < historicalPrices.size(); i++) {
             Price price = historicalPrices.get(i);
             double balanceBefore = backtestPortfolio.getBalance();
             double holdingsBefore = backtestPortfolio.getHoldings();
 
-            Signal executedSignal = tradingService.executeTradingCycle(price.value(), backtestPortfolio);
+            Signal executedSignal = tradingService.executeTradingCycleForBacktest(price.value(), backtestPortfolio);
 
             // Track trades and create trade records
             if (executedSignal == Signal.BUY && backtestPortfolio.hasHoldings()) {
