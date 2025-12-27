@@ -1,14 +1,20 @@
 <div class="app-container">
   <nav class="navbar" *ngIf="authService.isAuthenticated()">
-    <div class="nav-brand">
-      <h1>{{ title }}</h1>
+    <div class="nav-header">
+      <div class="nav-brand">
+        <h1>{{ title }}</h1>
+      </div>
+      <button class="logout-btn" (click)="logout()">
+        <span class="icon">🚪</span>
+        <span class="logout-text">Logout</span>
+      </button>
     </div>
     <div class="nav-links">
       <a routerLink="/dashboard" routerLinkActive="active">
         <span class="icon">📊</span> Dashboard
       </a>
       <a routerLink="/config" routerLinkActive="active">
-        <span class="icon">⚙️</span> Configuration
+        <span class="icon">⚙️</span> Config
       </a>
       <a routerLink="/backtest" routerLinkActive="active">
         <span class="icon">📈</span> Backtest
@@ -16,9 +22,6 @@
       <a routerLink="/change-password" routerLinkActive="active">
         <span class="icon">🔒</span> Password
       </a>
-      <button class="logout-btn" (click)="logout()">
-        <span class="icon">🚪</span> Logout
-      </button>
     </div>
   </nav>
 
