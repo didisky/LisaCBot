@@ -59,32 +59,49 @@ public class CoinGeckoPriceAdapter implements PriceProvider {
         log.info("Fetching {} days of historical BTC price data", days);
 
         String url = historicalApiUrl + "?vs_currency=usd&days=" + days;
+        log.info("CoinGecko API URL: {}", url);
 
-        Map<String, List<List<Number>>> response = restClient.get()
-                .uri(url)
-                .retrieve()
-                .body(Map.class);
+        try {
+            Map<String, List<List<Number>>> response = restClient.get()
+                    .uri(url)
+                    .retrieve()
+                    .body(Map.class);
 
-        if (response == null || !response.containsKey("prices")) {
-            throw new RuntimeException("Could not fetch historical Bitcoin prices");
+            if (response == null) {
+                log.error("CoinGecko API returned null response");
+                throw new RuntimeException("Could not fetch historical Bitcoin prices: null response");
+            }
+
+            if (!response.containsKey("prices")) {
+                log.error("CoinGecko API response missing 'prices' field. Response keys: {}", response.keySet());
+                throw new RuntimeException("Could not fetch historical Bitcoin prices: missing 'prices' field");
+            }
+
+            List<List<Number>> pricesData = response.get("prices");
+            if (pricesData == null || pricesData.isEmpty()) {
+                log.error("CoinGecko API returned empty prices array");
+                throw new RuntimeException("Could not fetch historical Bitcoin prices: empty prices array");
+            }
+
+            List<Price> result = new ArrayList<>();
+
+            for (List<Number> dataPoint : pricesData) {
+                long timestampMillis = dataPoint.get(0).longValue();
+                double price = dataPoint.get(1).doubleValue();
+
+                LocalDateTime timestamp = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(timestampMillis),
+                        ZoneId.systemDefault()
+                );
+
+                result.add(new Price(price, timestamp));
+            }
+
+            log.info("Successfully fetched {} historical price points", result.size());
+            return result;
+        } catch (Exception e) {
+            log.error("Error fetching historical prices from CoinGecko: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch historical Bitcoin prices: " + e.getMessage(), e);
         }
-
-        List<List<Number>> pricesData = response.get("prices");
-        List<Price> result = new ArrayList<>();
-
-        for (List<Number> dataPoint : pricesData) {
-            long timestampMillis = dataPoint.get(0).longValue();
-            double price = dataPoint.get(1).doubleValue();
-
-            LocalDateTime timestamp = LocalDateTime.ofInstant(
-                    Instant.ofEpochMilli(timestampMillis),
-                    ZoneId.systemDefault()
-            );
-
-            result.add(new Price(price, timestamp));
-        }
-
-        log.info("Fetched {} historical price points", result.size());
-        return result;
     }
 }

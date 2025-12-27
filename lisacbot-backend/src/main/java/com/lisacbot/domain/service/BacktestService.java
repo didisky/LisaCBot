@@ -52,6 +52,13 @@ public class BacktestService {
         log.info("Starting backtest for {} days with ${} initial balance", days, initialBalance);
 
         List<Price> historicalPrices = priceProvider.getHistoricalPrices(days);
+        log.info("Retrieved {} historical price points from provider", historicalPrices.size());
+
+        if (historicalPrices.isEmpty()) {
+            log.error("No historical prices available for backtest!");
+            throw new RuntimeException("No historical price data available");
+        }
+
         Portfolio backtestPortfolio = new Portfolio(initialBalance);
 
         // Detect the market cycle at the start of the backtest period
@@ -131,6 +138,9 @@ public class BacktestService {
                 trades.add(trade);
             }
         }
+
+        log.info("Backtest loop completed: {} BUY signals, {} SELL signals, {} total trades recorded",
+                buyTrades, sellTrades, trades.size());
 
         // Convert remaining holdings to balance using last price
         if (backtestPortfolio.hasHoldings() && !historicalPrices.isEmpty()) {
