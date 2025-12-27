@@ -160,5 +160,44 @@
         Your strategy broke even over {{ result.days }} days.
       </p>
     </div>
+
+    <!-- Trades Table -->
+    <div class="trades-section" *ngIf="result.trades && result.trades.length > 0">
+      <h4>📋 Trade History</h4>
+      <div class="trades-table-container">
+        <table class="trades-table">
+          <thead>
+            <tr>
+              <th>Date/Time</th>
+              <th>Type</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Balance After</th>
+              <th>P&L %</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let trade of result.trades" [ngClass]="getTradeTypeClass(trade.type)">
+              <td>{{ trade.timestamp | date:'short' }}</td>
+              <td class="trade-type">
+                <span class="badge" [ngClass]="getTradeTypeClass(trade.type)">
+                  {{ trade.type }}
+                </span>
+              </td>
+              <td>${{ trade.price.toFixed(2) }}</td>
+              <td>{{ trade.quantity.toFixed(6) }}</td>
+              <td>${{ trade.balanceAfter.toFixed(2) }}</td>
+              <td [class.positive]="trade.profitLossPercentage && trade.profitLossPercentage > 0"
+                  [class.negative]="trade.profitLossPercentage && trade.profitLossPercentage < 0">
+                {{ trade.profitLossPercentage ? trade.profitLossPercentage.toFixed(2) + '%' : 'N/A' }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="trade-count">
+          Total trades: {{ result.trades.length }}
+        </div>
+      </div>
+    </div>
   </div>
 </div>

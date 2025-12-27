@@ -6,11 +6,14 @@ import com.lisacbot.domain.model.MarketCycle;
 import com.lisacbot.domain.model.Portfolio;
 import com.lisacbot.domain.model.Price;
 import com.lisacbot.domain.model.Signal;
+import com.lisacbot.domain.model.Trade;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,18 +62,73 @@ public class BacktestService {
 
         int buyTrades = 0;
         int sellTrades = 0;
+        List<Trade> trades = new ArrayList<>();
+        String strategyName = tradingService.getStrategyName();
+
+        // Calculate the time interval between price points for realistic timestamps
+        LocalDateTime startTime = LocalDateTime.now().minusDays(days);
+        long intervalMinutes = (days * 24 * 60) / Math.max(1, historicalPrices.size());
 
         // Execute trading cycle for each historical price point
         // This reuses the core trading logic including stop-loss, take-profit, and cycle checks from TradingService
         // The cycle check uses the current real-time cycle, which represents the strategy configuration being tested
-        for (Price price : historicalPrices) {
+        for (int i = 0; i < historicalPrices.size(); i++) {
+            Price price = historicalPrices.get(i);
+            double balanceBefore = backtestPortfolio.getBalance();
+            double holdingsBefore = backtestPortfolio.getHoldings();
+
             Signal executedSignal = tradingService.executeTradingCycle(price.value(), backtestPortfolio);
 
-            // Track trades
+            // Track trades and create trade records
             if (executedSignal == Signal.BUY && backtestPortfolio.hasHoldings()) {
                 buyTrades++;
+                LocalDateTime tradeTime = startTime.plusMinutes(i * intervalMinutes);
+                Trade trade = new Trade(
+                        null,
+                        tradeTime,
+                        Signal.BUY,
+                        price.value(),
+                        backtestPortfolio.getHoldings(),
+                        balanceBefore,
+                        backtestPortfolio.getBalance(),
+                        null, // No P&L on buy
+                        strategyName,
+                        backtestCycle,
+                        "Backtest signal"
+                );
+                trades.add(trade);
             } else if (executedSignal == Signal.SELL && !backtestPortfolio.hasHoldings()) {
                 sellTrades++;
+                // Calculate P&L for sell trades
+                Double profitLoss = null;
+                if (holdingsBefore > 0) {
+                    double costBasis = balanceBefore; // Balance before sell was 0, so cost was from previous buy
+                    double revenue = backtestPortfolio.getBalance();
+                    // Find the cost from the last BUY trade
+                    for (int j = trades.size() - 1; j >= 0; j--) {
+                        if (trades.get(j).getType() == Signal.BUY) {
+                            costBasis = trades.get(j).getBalanceBefore();
+                            profitLoss = ((revenue - costBasis) / costBasis) * 100;
+                            break;
+                        }
+                    }
+                }
+
+                LocalDateTime tradeTime = startTime.plusMinutes(i * intervalMinutes);
+                Trade trade = new Trade(
+                        null,
+                        tradeTime,
+                        Signal.SELL,
+                        price.value(),
+                        holdingsBefore,
+                        balanceBefore,
+                        backtestPortfolio.getBalance(),
+                        profitLoss,
+                        strategyName,
+                        backtestCycle,
+                        "Backtest signal"
+                );
+                trades.add(trade);
             }
         }
 
@@ -80,8 +138,7 @@ public class BacktestService {
             backtestPortfolio.sell(lastPrice);
         }
 
-        // Get strategy information for the backtest result
-        String strategyName = tradingService.getStrategyName();
+        // Get strategy parameters for the backtest result
         java.util.Map<String, String> strategyParameters = tradingService.getStrategyParameters();
 
         BacktestResult result = new BacktestResult(
@@ -91,13 +148,15 @@ public class BacktestService {
                 sellTrades,
                 days,
                 strategyName,
-                strategyParameters
+                strategyParameters,
+                trades
         );
 
-        log.info("Backtest completed: Strategy={}, P&L = ${} ({}%)",
+        log.info("Backtest completed: Strategy={}, P&L = ${} ({}%), Trades executed: {}",
                 strategyName,
                 String.format("%.2f", result.getProfitLoss()),
-                String.format("%.2f", result.getProfitLossPercentage()));
+                String.format("%.2f", result.getProfitLossPercentage()),
+                trades.size());
 
         return result;
     }

@@ -1,5 +1,6 @@
 package com.lisacbot.domain.model;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -13,9 +14,10 @@ public class BacktestResult {
     private final int days;
     private final String strategyName;
     private final Map<String, String> strategyParameters;
+    private final List<Trade> trades;
 
     public BacktestResult(double initialBalance, double finalBalance, int buyTrades, int sellTrades, int days,
-                          String strategyName, Map<String, String> strategyParameters) {
+                          String strategyName, Map<String, String> strategyParameters, List<Trade> trades) {
         this.initialBalance = initialBalance;
         this.finalBalance = finalBalance;
         this.buyTrades = buyTrades;
@@ -23,6 +25,7 @@ public class BacktestResult {
         this.days = days;
         this.strategyName = strategyName;
         this.strategyParameters = strategyParameters;
+        this.trades = trades;
     }
 
     public double getProfitLoss() {
@@ -63,5 +66,9 @@ public class BacktestResult {
 
     public Map<String, String> getStrategyParameters() {
         return strategyParameters;
+    }
+
+    public List<Trade> getTrades() {
+        return trades;
     }
 }

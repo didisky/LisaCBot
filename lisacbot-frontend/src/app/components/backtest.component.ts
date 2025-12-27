@@ -126,4 +126,8 @@ export class BacktestComponent implements OnInit {
       value
     }));
   }
+
+  getTradeTypeClass(type: string): string {
+    return type === 'BUY' ? 'trade-buy' : 'trade-sell';
+  }
 }
