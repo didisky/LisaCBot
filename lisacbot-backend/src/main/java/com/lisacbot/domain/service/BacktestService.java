@@ -72,6 +72,12 @@ public class BacktestService {
         List<Trade> trades = new ArrayList<>();
         String strategyName = tradingService.getStrategyName();
 
+        // Log the current real-time market cycle being used for trading decisions
+        log.warn("⚠️ IMPORTANT: Backtest uses CURRENT real-time market cycle for trading decisions!");
+        log.warn("⚠️ Current real-time market cycle: {}", tradingService.getBotStatus().marketCycle());
+        log.warn("⚠️ Historical backtest period cycle: {}", backtestCycle);
+        log.warn("⚠️ If current cycle is not allowed, ALL backtest trades will be blocked!");
+
         // Calculate the time interval between price points for realistic timestamps
         LocalDateTime startTime = LocalDateTime.now().minusDays(days);
         long intervalMinutes = (days * 24 * 60) / Math.max(1, historicalPrices.size());
