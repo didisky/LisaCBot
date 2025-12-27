@@ -162,7 +162,7 @@
     </div>
 
     <!-- Trades Table -->
-    <div class="trades-section" *ngIf="result.trades && result.trades.length > 0">
+    <div class="trades-section" *ngIf="getValidTrades().length > 0">
       <h4>📋 Trade History</h4>
       <div class="trades-table-container">
         <table class="trades-table">
@@ -177,25 +177,24 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let trade of result.trades" [ngClass]="getTradeTypeClass(trade.type)">
+            <tr *ngFor="let trade of getValidTrades()" [ngClass]="getTradeTypeClass(trade.type)">
               <td>{{ trade.timestamp | date:'short' }}</td>
               <td class="trade-type">
                 <span class="badge" [ngClass]="getTradeTypeClass(trade.type)">
                   {{ trade.type }}
                 </span>
               </td>
-              <td>${{ trade.price.toFixed(2) }}</td>
-              <td>{{ trade.quantity.toFixed(6) }}</td>
-              <td>${{ trade.balanceAfter.toFixed(2) }}</td>
-              <td [class.positive]="trade.profitLossPercentage && trade.profitLossPercentage > 0"
-                  [class.negative]="trade.profitLossPercentage && trade.profitLossPercentage < 0">
-                {{ trade.profitLossPercentage ? trade.profitLossPercentage.toFixed(2) + '%' : 'N/A' }}
+              <td>${{ trade.price?.toFixed(2) || '0.00' }}</td>
+              <td>{{ trade.quantity?.toFixed(6) || '0.000000' }}</td>
+              <td>${{ trade.balanceAfter?.toFixed(2) || '0.00' }}</td>
+              <td [ngClass]="getProfitLossClass(trade.profitLossPercentage)">
+                {{ formatProfitLoss(trade.profitLossPercentage) }}
               </td>
             </tr>
           </tbody>
         </table>
         <div class="trade-count">
-          Total trades: {{ result.trades.length }}
+          Total trades: {{ getValidTrades().length }}
         </div>
       </div>
     </div>

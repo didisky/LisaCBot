@@ -70,6 +70,9 @@ export class BacktestComponent implements OnInit {
     this.botService.runBacktest(this.config.days, this.config.initialBalance).subscribe({
       next: (result) => {
         console.log('✅ Backtest result received:', result);
+        console.log('📊 Trades array:', result.trades);
+        console.log('📊 Trades length:', result.trades?.length);
+        console.log('📊 First trade:', result.trades?.[0]);
         this.result = result;
         this.addLog('Backtest completed successfully');
         this.addLog(`Total trades executed: ${result.totalTrades}`);
@@ -143,5 +146,33 @@ export class BacktestComponent implements OnInit {
 
   getTradeTypeClass(type: string): string {
     return type === 'BUY' ? 'trade-buy' : 'trade-sell';
+  }
+
+  getValidTrades() {
+    if (!this.result || !this.result.trades) return [];
+    // Filter out any null/undefined trades and ensure all required fields are present
+    return this.result.trades.filter(trade =>
+      trade &&
+      trade.type &&
+      trade.price !== null && trade.price !== undefined &&
+      trade.quantity !== null && trade.quantity !== undefined &&
+      trade.timestamp
+    );
+  }
+
+  formatProfitLoss(profitLoss: number | null | undefined): string {
+    if (profitLoss === null || profitLoss === undefined || typeof profitLoss !== 'number') {
+      return 'N/A';
+    }
+    return profitLoss.toFixed(2) + '%';
+  }
+
+  getProfitLossClass(profitLoss: number | null | undefined): string {
+    if (profitLoss === null || profitLoss === undefined || typeof profitLoss !== 'number') {
+      return '';
+    }
+    if (profitLoss > 0) return 'positive';
+    if (profitLoss < 0) return 'negative';
+    return '';
   }
 }
