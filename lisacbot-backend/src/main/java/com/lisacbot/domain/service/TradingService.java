@@ -368,4 +368,62 @@ public class TradingService {
         this.strategyName = newStrategyName;
         log.info("Trading strategy updated successfully");
     }
+
+    /**
+     * Gets the current strategy name.
+     *
+     * @return the strategy name
+     */
+    public String getStrategyName() {
+        return strategyName;
+    }
+
+    /**
+     * Gets the current strategy parameters as a formatted map.
+     *
+     * @return map of parameter names to values
+     */
+    public java.util.Map<String, String> getStrategyParameters() {
+        java.util.Map<String, String> params = new java.util.LinkedHashMap<>();
+
+        // Add parameters based on strategy type
+        switch (strategyName.toLowerCase()) {
+            case "sma":
+                params.put("SMA Period", String.valueOf(configurationService.getSmaPeriod()));
+                break;
+            case "ema-rsi":
+                params.put("EMA Period", String.valueOf(configurationService.getEmaPeriod()));
+                params.put("RSI Period", String.valueOf(configurationService.getRsiPeriod()));
+                params.put("RSI Oversold", String.valueOf(configurationService.getRsiOversold()));
+                params.put("RSI Overbought", String.valueOf(configurationService.getRsiOverbought()));
+                break;
+            case "macd":
+                params.put("MACD Fast Period", String.valueOf(configurationService.getMacdFastPeriod()));
+                params.put("MACD Slow Period", String.valueOf(configurationService.getMacdSlowPeriod()));
+                params.put("MACD Signal Period", String.valueOf(configurationService.getMacdSignalPeriod()));
+                break;
+            case "composite":
+                params.put("SMA Period", String.valueOf(configurationService.getSmaPeriod()));
+                params.put("EMA Period", String.valueOf(configurationService.getEmaPeriod()));
+                params.put("RSI Period", String.valueOf(configurationService.getRsiPeriod()));
+                params.put("RSI Oversold", String.valueOf(configurationService.getRsiOversold()));
+                params.put("RSI Overbought", String.valueOf(configurationService.getRsiOverbought()));
+                params.put("MACD Fast/Slow/Signal", configurationService.getMacdFastPeriod() + "/" +
+                        configurationService.getMacdSlowPeriod() + "/" +
+                        configurationService.getMacdSignalPeriod());
+                params.put("Buy Threshold", String.valueOf(configurationService.getCompositeBuyThreshold()));
+                params.put("Sell Threshold", String.valueOf(configurationService.getCompositeSellThreshold()));
+                break;
+        }
+
+        // Add common risk management parameters
+        if (trailingStopLossEnabled) {
+            params.put("Trailing Stop Loss", trailingStopLossPercentage + "%");
+        }
+        if (takeProfitEnabled) {
+            params.put("Take Profit", takeProfitPercentage + "%");
+        }
+
+        return params;
+    }
 }

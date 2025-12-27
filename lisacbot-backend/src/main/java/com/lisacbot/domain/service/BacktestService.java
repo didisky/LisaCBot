@@ -80,15 +80,22 @@ public class BacktestService {
             backtestPortfolio.sell(lastPrice);
         }
 
+        // Get strategy information for the backtest result
+        String strategyName = tradingService.getStrategyName();
+        java.util.Map<String, String> strategyParameters = tradingService.getStrategyParameters();
+
         BacktestResult result = new BacktestResult(
                 initialBalance,
                 backtestPortfolio.getBalance(),
                 buyTrades,
                 sellTrades,
-                days
+                days,
+                strategyName,
+                strategyParameters
         );
 
-        log.info("Backtest completed: P&L = ${} ({}%)",
+        log.info("Backtest completed: Strategy={}, P&L = ${} ({}%)",
+                strategyName,
                 String.format("%.2f", result.getProfitLoss()),
                 String.format("%.2f", result.getProfitLossPercentage()));
 

@@ -53,6 +53,26 @@
   <div *ngIf="result" class="results" [ngClass]="getResultClass()">
     <h3>{{ getPerformanceIcon() }} Backtest Results</h3>
 
+    <!-- Strategy Information Card -->
+    <div class="strategy-info-card">
+      <h4>📊 Strategy Information</h4>
+      <div class="strategy-details">
+        <div class="strategy-name">
+          <span class="label">Strategy:</span>
+          <span class="value strategy-badge">{{ result.strategyName.toUpperCase() }}</span>
+        </div>
+        <div class="strategy-parameters">
+          <span class="label">Parameters:</span>
+          <div class="params-grid">
+            <div *ngFor="let param of getParametersArray()" class="param-item">
+              <span class="param-name">{{ param.key }}:</span>
+              <span class="param-value">{{ param.value }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Performance Card -->
     <div class="performance-card">
       <div class="performance-main">

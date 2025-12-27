@@ -7,4 +7,6 @@ export interface BacktestResult {
   profitLoss: number;
   profitLossPercentage: number;
   days: number;
+  strategyName: string;
+  strategyParameters: { [key: string]: string };
 }

@@ -82,4 +82,12 @@ export class BacktestComponent {
     if (this.result.profitLoss < 0) return '📉';
     return '➡️';
   }
+
+  getParametersArray(): Array<{key: string, value: string}> {
+    if (!this.result || !this.result.strategyParameters) return [];
+    return Object.entries(this.result.strategyParameters).map(([key, value]) => ({
+      key,
+      value
+    }));
+  }
 }
