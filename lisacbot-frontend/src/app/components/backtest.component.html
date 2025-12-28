@@ -163,9 +163,14 @@
 
     <!-- BTC Price Chart -->
     <div class="chart-section" *ngIf="result.historicalPrices && result.historicalPrices.length > 0">
-      <h4>📈 BTC Price Evolution</h4>
+      <div class="chart-header">
+        <h4>📈 BTC Price Evolution</h4>
+        <button class="btn-reset-zoom" (click)="resetZoom()" title="Reset zoom">🔍 Reset Zoom</button>
+      </div>
+      <p class="chart-instructions">💡 Scroll to zoom, drag to pan</p>
       <div class="chart-container">
         <canvas baseChart
+          #chartCanvas
           [data]="lineChartData"
           [options]="lineChartOptions"
           [type]="lineChartType">

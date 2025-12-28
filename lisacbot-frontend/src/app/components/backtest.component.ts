@@ -1,12 +1,16 @@
-import { Component, ChangeDetectorRef, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BotService } from '../services/bot.service';
 import { BacktestResult } from '../models/backtest-result.model';
 import { BacktestConfig } from '../models/strategy-config.model';
 import { BaseChartDirective } from 'ng2-charts';
-import { ChartConfiguration, ChartType } from 'chart.js';
+import { Chart, ChartConfiguration, ChartType } from 'chart.js';
+import zoomPlugin from 'chartjs-plugin-zoom';
 import 'chartjs-adapter-date-fns';
+
+// Register the zoom plugin
+Chart.register(zoomPlugin);
 
 @Component({
   selector: 'app-backtest',
@@ -20,6 +24,8 @@ export class BacktestComponent implements OnInit {
     days: 30,
     initialBalance: 1000
   };
+
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   result: BacktestResult | null = null;
   loading = false;
@@ -65,6 +71,25 @@ export class BacktestComponent implements OnInit {
       tooltip: {
         mode: 'index',
         intersect: false
+      },
+      zoom: {
+        zoom: {
+          wheel: {
+            enabled: true,
+            speed: 0.1
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: 'x'
+        },
+        pan: {
+          enabled: true,
+          mode: 'x'
+        },
+        limits: {
+          x: { min: 'original', max: 'original' }
+        }
       }
     }
   };
@@ -288,5 +313,12 @@ export class BacktestComponent implements OnInit {
     };
 
     console.log('📈 Chart updated with', result.historicalPrices.length, 'price points,', buyTrades.length, 'BUY trades,', sellTrades.length, 'SELL trades');
+  }
+
+  resetZoom() {
+    if (this.chart?.chart) {
+      this.chart.chart.resetZoom();
+      console.log('🔍 Chart zoom reset');
+    }
   }
 }
