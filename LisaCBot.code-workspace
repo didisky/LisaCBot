@@ -1,0 +1,70 @@
+{
+  "folders": [
+    {
+      "name": "Backend (Spring Boot)",
+      "path": "lisacbot-backend"
+    },
+    {
+      "name": "Frontend (Angular)",
+      "path": "lisacbot-frontend"
+    },
+    {
+      "name": "Root (Docker & Scripts)",
+      "path": "."
+    }
+  ],
+  "settings": {
+    // Java/Spring Boot configuration
+    "java.project.sourcePaths": [
+      "lisacbot-backend/src/main/java",
+      "lisacbot-backend/src/test/java"
+    ],
+    "java.project.outputPath": "lisacbot-backend/target/classes",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "spring-boot.ls.java.home": "${env:JAVA_HOME}",
+    "spring-boot.ls.checkJVM": false,
+
+    // Maven configuration
+    "maven.pomfile.globPattern": "**/lisacbot-backend/pom.xml",
+    "maven.terminal.useJavaHome": true,
+
+    // Files to exclude from search/watch
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/target": true,
+      "**/.DS_Store": true
+    },
+    "files.watcherExclude": {
+      "**/node_modules/**": true,
+      "**/target/**": true,
+      "**/dist/**": true
+    },
+
+    // Angular configuration
+    "typescript.tsdk": "lisacbot-frontend/node_modules/typescript/lib",
+
+    // Editor settings
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+
+    // File associations
+    "files.associations": {
+      "*.java": "java",
+      "*.ts": "typescript",
+      "*.html": "html"
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "vscjava.vscode-java-pack",
+      "vmware.vscode-spring-boot",
+      "vscjava.vscode-spring-initializr",
+      "vscjava.vscode-spring-boot-dashboard",
+      "angular.ng-template",
+      "ms-vscode.vscode-typescript-next",
+      "cweijan.vscode-database-client2"
+    ]
+  }
+}
