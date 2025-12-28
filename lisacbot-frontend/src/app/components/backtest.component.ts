@@ -151,13 +151,14 @@ export class BacktestComponent implements OnInit {
   getValidTrades() {
     if (!this.result || !this.result.trades) return [];
     // Filter out any null/undefined trades and ensure all required fields are present
+    // Reverse the array to show most recent trades first
     return this.result.trades.filter(trade =>
       trade &&
       trade.type &&
       trade.price !== null && trade.price !== undefined &&
       trade.quantity !== null && trade.quantity !== undefined &&
       trade.timestamp
-    );
+    ).reverse();
   }
 
   formatProfitLoss(profitLoss: number | null | undefined): string {
