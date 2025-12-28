@@ -1,4 +1,5 @@
 import { Trade } from './trade.model';
+import { Price } from './price.model';
 
 export interface BacktestResult {
   initialBalance: number;
@@ -12,4 +13,5 @@ export interface BacktestResult {
   strategyName: string;
   strategyParameters: { [key: string]: string };
   trades: Trade[];
+  historicalPrices: Price[];
 }

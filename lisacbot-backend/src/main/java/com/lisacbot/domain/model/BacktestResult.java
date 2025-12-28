@@ -15,9 +15,11 @@ public class BacktestResult {
     private final String strategyName;
     private final Map<String, String> strategyParameters;
     private final List<Trade> trades;
+    private final List<Price> historicalPrices;
 
     public BacktestResult(double initialBalance, double finalBalance, int buyTrades, int sellTrades, int days,
-                          String strategyName, Map<String, String> strategyParameters, List<Trade> trades) {
+                          String strategyName, Map<String, String> strategyParameters, List<Trade> trades,
+                          List<Price> historicalPrices) {
         this.initialBalance = initialBalance;
         this.finalBalance = finalBalance;
         this.buyTrades = buyTrades;
@@ -26,6 +28,7 @@ public class BacktestResult {
         this.strategyName = strategyName;
         this.strategyParameters = strategyParameters;
         this.trades = trades;
+        this.historicalPrices = historicalPrices;
     }
 
     public double getProfitLoss() {
@@ -70,5 +73,9 @@ public class BacktestResult {
 
     public List<Trade> getTrades() {
         return trades;
+    }
+
+    public List<Price> getHistoricalPrices() {
+        return historicalPrices;
     }
 }

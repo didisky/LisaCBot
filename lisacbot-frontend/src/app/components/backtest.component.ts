@@ -4,11 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { BotService } from '../services/bot.service';
 import { BacktestResult } from '../models/backtest-result.model';
 import { BacktestConfig } from '../models/strategy-config.model';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartType } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 
 @Component({
   selector: 'app-backtest',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BaseChartDirective],
   templateUrl: './backtest.component.html',
   styleUrls: ['./backtest.component.css']
 })
@@ -27,6 +30,46 @@ export class BacktestComponent implements OnInit {
   // Current strategy information
   currentStrategyName: string = '';
   currentStrategyParameters: { [key: string]: string } = {};
+
+  // Chart configuration
+  public lineChartData: ChartConfiguration['data'] = {
+    datasets: [],
+    labels: []
+  };
+
+  public lineChartOptions: ChartConfiguration['options'] = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'day'
+        },
+        title: {
+          display: true,
+          text: 'Date'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Price (USD)'
+        }
+      }
+    },
+    plugins: {
+      legend: {
+        display: true
+      },
+      tooltip: {
+        mode: 'index',
+        intersect: false
+      }
+    }
+  };
+
+  public lineChartType: ChartType = 'line';
 
   constructor(
     private botService: BotService,
@@ -79,6 +122,9 @@ export class BacktestComponent implements OnInit {
         this.addLog(`Final P&L: $${result.profitLoss.toFixed(2)} (${result.profitLossPercentage.toFixed(2)}%)`);
         this.loading = false;
         console.log('🟢 Backtest state - loading:', this.loading, 'result:', this.result);
+
+        // Update chart with historical price data
+        this.updateChart(result);
 
         // Force change detection
         this.cdr.detectChanges();
@@ -175,5 +221,34 @@ export class BacktestComponent implements OnInit {
     if (profitLoss > 0) return 'positive';
     if (profitLoss < 0) return 'negative';
     return '';
+  }
+
+  updateChart(result: BacktestResult) {
+    if (!result.historicalPrices || result.historicalPrices.length === 0) {
+      console.warn('No historical prices available for chart');
+      return;
+    }
+
+    // Prepare chart data
+    const labels = result.historicalPrices.map(p => new Date(p.timestamp));
+    const priceData = result.historicalPrices.map(p => p.value);
+
+    this.lineChartData = {
+      labels: labels,
+      datasets: [
+        {
+          data: priceData,
+          label: 'BTC Price',
+          borderColor: '#f7931a',
+          backgroundColor: 'rgba(247, 147, 26, 0.1)',
+          pointRadius: 0,
+          pointHoverRadius: 4,
+          borderWidth: 2,
+          tension: 0.1
+        }
+      ]
+    };
+
+    console.log('📈 Chart updated with', result.historicalPrices.length, 'price points');
   }
 }

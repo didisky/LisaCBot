@@ -162,7 +162,8 @@ public class BacktestService {
                 days,
                 strategyName,
                 strategyParameters,
-                trades
+                trades,
+                historicalPrices
         );
 
         log.info("Backtest completed: Strategy={}, P&L = ${} ({}%), Trades executed: {}",
