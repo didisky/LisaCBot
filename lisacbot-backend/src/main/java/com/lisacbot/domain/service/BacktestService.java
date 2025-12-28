@@ -89,7 +89,8 @@ public class BacktestService {
             Signal executedSignal = tradingService.executeTradingCycleForBacktest(price.value(), backtestPortfolio);
 
             // Track trades and create trade records
-            if (executedSignal == Signal.BUY && backtestPortfolio.hasHoldings()) {
+            // Only record a trade if the holdings actually changed (trade was executed)
+            if (executedSignal == Signal.BUY && holdingsBefore == 0 && backtestPortfolio.hasHoldings()) {
                 buyTrades++;
                 LocalDateTime tradeTime = startTime.plusMinutes(i * intervalMinutes);
                 Trade trade = new Trade(
@@ -106,7 +107,7 @@ public class BacktestService {
                         "Backtest signal"
                 );
                 trades.add(trade);
-            } else if (executedSignal == Signal.SELL && !backtestPortfolio.hasHoldings()) {
+            } else if (executedSignal == Signal.SELL && holdingsBefore > 0 && !backtestPortfolio.hasHoldings()) {
                 sellTrades++;
                 // Calculate P&L for sell trades
                 Double profitLoss = null;
