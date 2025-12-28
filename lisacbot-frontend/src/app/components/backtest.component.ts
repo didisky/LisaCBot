@@ -229,14 +229,29 @@ export class BacktestComponent implements OnInit {
       return;
     }
 
-    // Prepare chart data
+    // Prepare price chart data
     const labels = result.historicalPrices.map(p => new Date(p.timestamp));
     const priceData = result.historicalPrices.map(p => p.value);
+
+    // Prepare trade data
+    const buyTrades = result.trades?.filter(t => t.type === 'BUY') || [];
+    const sellTrades = result.trades?.filter(t => t.type === 'SELL') || [];
+
+    const buyTradeData = buyTrades.map(t => ({
+      x: new Date(t.timestamp).getTime(),
+      y: t.price
+    }));
+
+    const sellTradeData = sellTrades.map(t => ({
+      x: new Date(t.timestamp).getTime(),
+      y: t.price
+    }));
 
     this.lineChartData = {
       labels: labels,
       datasets: [
         {
+          type: 'line',
           data: priceData,
           label: 'BTC Price',
           borderColor: '#f7931a',
@@ -244,11 +259,34 @@ export class BacktestComponent implements OnInit {
           pointRadius: 0,
           pointHoverRadius: 4,
           borderWidth: 2,
-          tension: 0.1
+          tension: 0.1,
+          order: 2
+        },
+        {
+          type: 'scatter',
+          data: buyTradeData,
+          label: 'BUY',
+          borderColor: '#28a745',
+          backgroundColor: '#28a745',
+          pointRadius: 8,
+          pointHoverRadius: 10,
+          pointStyle: 'circle',
+          order: 1
+        },
+        {
+          type: 'scatter',
+          data: sellTradeData,
+          label: 'SELL',
+          borderColor: '#dc3545',
+          backgroundColor: '#dc3545',
+          pointRadius: 8,
+          pointHoverRadius: 10,
+          pointStyle: 'circle',
+          order: 1
         }
       ]
     };
 
-    console.log('📈 Chart updated with', result.historicalPrices.length, 'price points');
+    console.log('📈 Chart updated with', result.historicalPrices.length, 'price points,', buyTrades.length, 'BUY trades,', sellTrades.length, 'SELL trades');
   }
 }
