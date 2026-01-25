@@ -1,21 +1,25 @@
 """
-Node functions for Bitcoin trading analysis workflow.
+Node functions for Bitcoin trading analysis workflow using OpenAI.
 """
 
+import os
+import json
+from typing import Dict, Any
+from openai import OpenAI
 from trading_state import TradingState
 
 
-def calculate_indicators_node(state: TradingState) -> TradingState:
+def analyze_with_openai_node(state: TradingState) -> TradingState:
     """
-    Calculate technical indicators from price history.
+    Analyze price history and generate trading signal using OpenAI API.
 
     Args:
         state: Current workflow state with price history
 
     Returns:
-        Updated state with calculated indicators
+        Updated state with trading signal, confidence, reasoning, and indicators
     """
-    print(f"Calculating indicators for {len(state['price_history'])} price points...")
+    print(f"Analyzing {len(state['price_history'])} price points with OpenAI...")
 
     try:
         price_history = state['price_history']
@@ -24,149 +28,63 @@ def calculate_indicators_node(state: TradingState) -> TradingState:
         if len(price_history) < 2:
             return {
                 **state,
-                "indicators": {},
-                "error": "Insufficient price history (need at least 2 data points)"
-            }
-
-        # Calculate Simple Moving Average (SMA)
-        sma_20 = sum(price_history[-20:]) / min(20, len(price_history))
-        sma_50 = sum(price_history[-50:]) / min(50, len(price_history)) if len(price_history) >= 50 else sma_20
-
-        # Calculate price change percentage
-        price_change = ((current_price - price_history[-1]) / price_history[-1]) * 100
-
-        # Calculate volatility (standard deviation of last 20 prices)
-        recent_prices = price_history[-20:]
-        mean_price = sum(recent_prices) / len(recent_prices)
-        variance = sum((p - mean_price) ** 2 for p in recent_prices) / len(recent_prices)
-        volatility = variance ** 0.5
-
-        # Calculate RSI (Relative Strength Index) - simplified version
-        gains = []
-        losses = []
-        for i in range(1, min(14, len(price_history))):
-            change = price_history[-i] - price_history[-(i+1)]
-            if change > 0:
-                gains.append(change)
-            else:
-                losses.append(abs(change))
-
-        avg_gain = sum(gains) / len(gains) if gains else 0
-        avg_loss = sum(losses) / len(losses) if losses else 0
-        rs = avg_gain / avg_loss if avg_loss != 0 else 0
-        rsi = 100 - (100 / (1 + rs))
-
-        indicators = {
-            "sma_20": round(sma_20, 2),
-            "sma_50": round(sma_50, 2),
-            "price_change_pct": round(price_change, 2),
-            "volatility": round(volatility, 2),
-            "rsi": round(rsi, 2),
-            "current_price": current_price,
-            "price_above_sma20": current_price > sma_20,
-            "price_above_sma50": current_price > sma_50
-        }
-
-        print(f"Indicators calculated: SMA20={sma_20:.2f}, RSI={rsi:.2f}")
-
-        return {
-            **state,
-            "indicators": indicators,
-            "error": None
-        }
-
-    except Exception as e:
-        error_msg = f"Error calculating indicators: {str(e)}"
-        print(f"Error: {error_msg}")
-        return {
-            **state,
-            "indicators": {},
-            "error": error_msg
-        }
-
-
-def analyze_signals_node(state: TradingState) -> TradingState:
-    """
-    Analyze indicators and generate trading signal.
-
-    Args:
-        state: Current workflow state with indicators
-
-    Returns:
-        Updated state with trading signal and reasoning
-    """
-    print("Analyzing trading signals...")
-
-    try:
-        indicators = state.get('indicators', {})
-
-        if not indicators or state.get('error'):
-            return {
-                **state,
                 "signal": "HOLD",
                 "confidence": 0.0,
-                "reasoning": "Insufficient data for analysis"
+                "reasoning": "Insufficient price history (need at least 2 data points)",
+                "indicators": {},
+                "error": "Insufficient data"
             }
 
-        current_price = indicators['current_price']
-        sma_20 = indicators['sma_20']
-        sma_50 = indicators['sma_50']
-        rsi = indicators['rsi']
-        price_change_pct = indicators['price_change_pct']
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-        # Decision logic
-        signal = "HOLD"
-        confidence = 50.0
-        reasons = []
+        prompt = f"""You are a Bitcoin trading analyst. Analyze the following price data and provide a trading recommendation.
 
-        # Trend analysis
-        if current_price > sma_20 and current_price > sma_50:
-            signal = "BUY"
-            confidence += 15
-            reasons.append(f"Price ({current_price:.2f}) above both SMA20 ({sma_20:.2f}) and SMA50 ({sma_50:.2f})")
-        elif current_price < sma_20 and current_price < sma_50:
-            signal = "SELL"
-            confidence += 15
-            reasons.append(f"Price ({current_price:.2f}) below both SMA20 ({sma_20:.2f}) and SMA50 ({sma_50:.2f})")
+Current Bitcoin Price: ${current_price:.2f}
 
-        # RSI analysis
-        if rsi < 30:
-            if signal != "SELL":
-                signal = "BUY"
-                confidence += 10
-                reasons.append(f"RSI ({rsi:.2f}) indicates oversold condition")
-        elif rsi > 70:
-            if signal != "BUY":
-                signal = "SELL"
-                confidence += 10
-                reasons.append(f"RSI ({rsi:.2f}) indicates overbought condition")
+Recent Price History (last {len(price_history)} prices):
+{price_history}
 
-        # Price momentum
-        if price_change_pct > 2:
-            if signal == "BUY":
-                confidence += 10
-                reasons.append(f"Strong upward momentum ({price_change_pct:.2f}%)")
-        elif price_change_pct < -2:
-            if signal == "SELL":
-                confidence += 10
-                reasons.append(f"Strong downward momentum ({price_change_pct:.2f}%)")
+Please analyze this data and provide:
+1. A trading signal (BUY, SELL, or HOLD)
+2. A confidence level from 0 to 100
+3. Technical indicators you calculated (SMA20, SMA50, RSI, volatility, price_change_pct)
+4. Clear reasoning for your recommendation
 
-        # Golden/Death cross
-        if sma_20 > sma_50:
-            if signal == "BUY":
-                confidence += 5
-                reasons.append("Golden cross pattern (SMA20 > SMA50)")
-        else:
-            if signal == "SELL":
-                confidence += 5
-                reasons.append("Death cross pattern (SMA20 < SMA50)")
+Respond ONLY with valid JSON in this exact format:
+{{
+  "signal": "BUY|SELL|HOLD",
+  "confidence": 0-100,
+  "reasoning": "your detailed reasoning",
+  "indicators": {{
+    "sma_20": number,
+    "sma_50": number,
+    "rsi": number,
+    "volatility": number,
+    "price_change_pct": number,
+    "current_price": {current_price},
+    "price_above_sma20": boolean,
+    "price_above_sma50": boolean
+  }}
+}}"""
 
-        # Cap confidence at 100
-        confidence = min(confidence, 100.0)
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": "You are a professional cryptocurrency trading analyst. Always respond with valid JSON only, no additional text."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.3,
+            response_format={"type": "json_object"}
+        )
 
-        reasoning = " | ".join(reasons) if reasons else "Neutral market conditions"
+        result = json.loads(response.choices[0].message.content)
 
-        print(f"Signal: {signal} (confidence: {confidence:.1f}%)")
+        signal = result.get("signal", "HOLD")
+        confidence = float(result.get("confidence", 50.0))
+        reasoning = result.get("reasoning", "OpenAI analysis")
+        indicators = result.get("indicators", {})
+
+        print(f"OpenAI Signal: {signal} (confidence: {confidence:.1f}%)")
         print(f"Reasoning: {reasoning}")
 
         return {
@@ -174,16 +92,18 @@ def analyze_signals_node(state: TradingState) -> TradingState:
             "signal": signal,
             "confidence": confidence,
             "reasoning": reasoning,
+            "indicators": indicators,
             "error": None
         }
 
     except Exception as e:
-        error_msg = f"Error analyzing signals: {str(e)}"
+        error_msg = f"Error calling OpenAI API: {str(e)}"
         print(f"Error: {error_msg}")
         return {
             **state,
             "signal": "HOLD",
             "confidence": 0.0,
-            "reasoning": "Error in analysis",
+            "reasoning": "Error in OpenAI analysis",
+            "indicators": {},
             "error": error_msg
         }

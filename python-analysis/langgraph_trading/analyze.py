@@ -16,7 +16,6 @@ Output (JSON):
 import sys
 import json
 from trading_state import TradingState
-from trading_nodes import calculate_indicators_node, analyze_signals_node
 from trading_graph import create_trading_graph
 
 
