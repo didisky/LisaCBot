@@ -36,6 +36,7 @@ public class TradingService {
     private final TradeRepository tradeRepository;
     private final PriceHistoryRepository priceHistoryRepository;
     private final TradeEventPublisher tradeEventPublisher;
+    private final PriceEventPublisher priceEventPublisher;
     private final Portfolio portfolio;
     private final boolean trailingStopLossEnabled;
     private final double trailingStopLossPercentage;
@@ -57,6 +58,7 @@ public class TradingService {
             TradeRepository tradeRepository,
             PriceHistoryRepository priceHistoryRepository,
             TradeEventPublisher tradeEventPublisher,
+            PriceEventPublisher priceEventPublisher,
             com.lisacbot.infrastructure.config.ConfigurationService configurationService,
             @Value("${bot.initial.balance}") double initialBalance,
             @Value("${bot.trailing.stop.loss.enabled}") boolean trailingStopLossEnabled,
@@ -72,6 +74,7 @@ public class TradingService {
         this.tradeRepository = tradeRepository;
         this.priceHistoryRepository = priceHistoryRepository;
         this.tradeEventPublisher = tradeEventPublisher;
+        this.priceEventPublisher = priceEventPublisher;
         this.configurationService = configurationService;
         this.portfolio = new Portfolio(initialBalance);
         this.trailingStopLossEnabled = trailingStopLossEnabled;
@@ -134,6 +137,7 @@ public class TradingService {
         try {
             lastPrice = priceProvider.getCurrentPrice();
             priceHistoryRepository.save(lastPrice);
+            priceEventPublisher.publishPriceEvent(lastPrice);
             executeTradingCycle(lastPrice.value());
         } catch (Exception e) {
             log.error("Error during trading cycle: {}", e.getMessage());

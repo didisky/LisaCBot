@@ -1,9 +1,11 @@
-import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import { Subscription } from 'rxjs';
 import { BotService } from '../../services/bot.service';
+import { PriceEventService } from '../../services/price-event.service';
 import type { PriceEntry } from '../../models/price.model';
 
 Chart.register(...registerables);
@@ -22,7 +24,7 @@ interface Period {
   templateUrl: './price-history-chart.component.html',
   styleUrls: ['./price-history-chart.component.css'],
 })
-export class PriceHistoryChartComponent implements OnInit {
+export class PriceHistoryChartComponent implements OnInit, OnDestroy {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   periods: Period[] = [
@@ -85,10 +87,23 @@ export class PriceHistoryChartComponent implements OnInit {
     },
   };
 
-  constructor(private botService: BotService, private cdr: ChangeDetectorRef) {}
+  private priceEventSubscription?: Subscription;
+
+  constructor(
+    private botService: BotService,
+    private cdr: ChangeDetectorRef,
+    private priceEventService: PriceEventService
+  ) {}
 
   ngOnInit() {
     this.loadData();
+    this.priceEventService.connect();
+    this.priceEventSubscription = this.priceEventService.getPriceEvents().subscribe(() => this.loadData());
+  }
+
+  ngOnDestroy() {
+    this.priceEventSubscription?.unsubscribe();
+    this.priceEventService.disconnect();
   }
 
   selectPeriod(hours: number) {
