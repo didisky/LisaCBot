@@ -53,6 +53,12 @@ export class BotService {
     return this.http.get<Trade[]>(`${this.apiUrl}/trades`);
   }
 
+  getTradesByRange(start: Date, end: Date): Observable<Trade[]> {
+    const startStr = start.toISOString().slice(0, 19);
+    const endStr = end.toISOString().slice(0, 19);
+    return this.http.get<Trade[]>(`${this.apiUrl}/trades/range?start=${startStr}&end=${endStr}`);
+  }
+
   startBot(): Observable<any> {
     return this.http.post(`${this.apiUrl}/bot/start`, {});
   }

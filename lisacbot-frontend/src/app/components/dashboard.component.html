@@ -83,7 +83,16 @@
   <app-price-history-chart></app-price-history-chart>
 
   <div class="chart-panel">
-    <h3>Trade History Chart</h3>
+    <div class="chart-header">
+      <h3>Trade History Chart</h3>
+      <div class="period-selector">
+        <button
+          *ngFor="let p of tradePeriods"
+          [class.active]="selectedTradeHours === p.hours"
+          (click)="selectTradePeriod(p.hours)"
+        >{{ p.label }}</button>
+      </div>
+    </div>
     <div class="chart-container">
       <canvas baseChart
               [data]="lineChartData"

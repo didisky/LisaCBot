@@ -6,6 +6,7 @@ import { Trade } from '../models/trade.model';
 import { Subscription } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import 'chartjs-adapter-date-fns';
 import { trigger, state, style, transition, animate } from '@angular/animations';
 import { PriceHistoryChartComponent } from './price-history-chart/price-history-chart.component';
 
@@ -58,6 +59,17 @@ export class DashboardComponent implements OnInit, OnDestroy {
   trades: Trade[] = [];
   displayedTrades: Trade[] = [];
   maxDisplayedTrades = 10;
+
+  tradePeriods = [
+    { label: '1H',  hours: 1,    timeUnit: 'minute', tooltipFormat: 'HH:mm' },
+    { label: '6H',  hours: 6,    timeUnit: 'hour',   tooltipFormat: 'HH:mm' },
+    { label: '24H', hours: 24,   timeUnit: 'hour',   tooltipFormat: 'dd MMM HH:mm' },
+    { label: '7J',  hours: 168,  timeUnit: 'day',    tooltipFormat: 'dd MMM' },
+    { label: '1M',  hours: 720,  timeUnit: 'week',   tooltipFormat: 'dd MMM yyyy' },
+    { label: '6M',  hours: 4380, timeUnit: 'month',  tooltipFormat: 'MMM yyyy' },
+    { label: '1A',  hours: 8760, timeUnit: 'month',  tooltipFormat: 'MMM yyyy' },
+  ];
+  selectedTradeHours = 24;
 
   // Chart configuration
   public lineChartData: any = {
@@ -122,24 +134,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
     },
     scales: {
       x: {
-        type: 'linear',
-        display: true,
-        title: {
-          display: true,
-          text: 'Date & Time'
+        type: 'time',
+        time: {
+          unit: 'hour',
+          tooltipFormat: 'dd MMM HH:mm',
+          displayFormats: { minute: 'HH:mm', hour: 'HH:mm', day: 'dd MMM' },
         },
-        ticks: {
-          callback: (value: any) => {
-            // Format x-axis labels to show date and time
-            const date = new Date(value);
-            return date.toLocaleString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            });
-          }
-        }
+        ticks: { maxTicksLimit: 8, color: '#6c757d' },
+        grid: { color: 'rgba(0,0,0,0.05)' },
       },
       y: {
         display: true,
@@ -168,6 +170,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.refreshData();
 
     // Load trade history
+    this.updateTradeChartTimeScale();
     this.loadTradeHistory();
 
     // Load bot configuration
@@ -249,16 +252,51 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadTradeHistory();
   }
 
+  selectTradePeriod(hours: number) {
+    this.selectedTradeHours = hours;
+    this.updateTradeChartTimeScale();
+    this.loadTradeHistory();
+  }
+
+  private updateTradeChartTimeScale() {
+    const period = this.tradePeriods.find(p => p.hours === this.selectedTradeHours)!;
+    const now = Date.now();
+    const min = now - this.selectedTradeHours * 3_600_000;
+    this.lineChartOptions = {
+      ...this.lineChartOptions,
+      scales: {
+        ...this.lineChartOptions.scales,
+        x: {
+          type: 'time',
+          min,
+          max: now,
+          time: {
+            unit: period.timeUnit,
+            tooltipFormat: period.tooltipFormat,
+            displayFormats: {
+              minute: 'HH:mm',
+              hour: 'HH:mm',
+              day: 'dd MMM',
+              week: 'dd MMM',
+              month: 'MMM yyyy',
+            },
+          },
+          ticks: { maxTicksLimit: 8, color: '#6c757d' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+      },
+    };
+    this.cdr.detectChanges();
+  }
+
   loadTradeHistory() {
-    this.botService.getTradeHistory().subscribe({
+    const end = new Date();
+    const start = new Date(end.getTime() - this.selectedTradeHours * 3_600_000);
+    this.botService.getTradesByRange(start, end).subscribe({
       next: (trades) => {
         this.trades = trades;
-        // Display only the most recent trades
         this.displayedTrades = trades.slice(0, this.maxDisplayedTrades);
-
-        // Update trade markers on chart
         this.updateTradeMarkers();
-
         this.cdr.detectChanges();
       },
       error: (err) => {
