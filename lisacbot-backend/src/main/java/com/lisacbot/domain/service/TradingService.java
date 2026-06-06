@@ -64,8 +64,7 @@ public class TradingService {
             @Value("${bot.take.profit.enabled}") boolean takeProfitEnabled,
             @Value("${bot.take.profit.percentage}") double takeProfitPercentage,
             @Value("${bot.cycle.analysis.window.days}") int cycleAnalysisDays,
-            @Value("${bot.cycle.allowed}") String allowedCyclesConfig,
-            @Value("${bot.strategy.type}") String strategyName
+            @Value("${bot.cycle.allowed}") String allowedCyclesConfig
     ) {
         this.priceProvider = priceProvider;
         this.strategy = strategy;
@@ -80,7 +79,6 @@ public class TradingService {
         this.takeProfitEnabled = takeProfitEnabled;
         this.takeProfitPercentage = takeProfitPercentage;
         this.cycleAnalysisDays = cycleAnalysisDays;
-        this.strategyName = strategyName;
 
         // Parse allowed cycles from comma-separated config
         this.allowedCycles = Arrays.stream(allowedCyclesConfig.split(","))
@@ -94,6 +92,7 @@ public class TradingService {
 
     @PostConstruct
     public void initialize() {
+        this.strategyName = configurationService.getStrategyType();
         log.info("LisaCBot initialized (not started)");
         log.info("Starting balance: ${}", portfolio.getBalance());
         if (trailingStopLossEnabled) {

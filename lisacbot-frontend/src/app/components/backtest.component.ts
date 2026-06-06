@@ -110,7 +110,7 @@ export class BacktestComponent implements OnInit {
     this.botService.getCurrentConfiguration().subscribe({
       next: (config) => {
         console.log('✅ Strategy config received:', config);
-        this.currentStrategyName = config.strategyName || 'Unknown';
+        this.currentStrategyName = config.strategyType || config.strategyName || 'Unknown';
         this.currentStrategyParameters = config.strategyParameters || {};
         console.log('📊 Strategy name:', this.currentStrategyName);
         console.log('📊 Strategy parameters:', this.currentStrategyParameters);

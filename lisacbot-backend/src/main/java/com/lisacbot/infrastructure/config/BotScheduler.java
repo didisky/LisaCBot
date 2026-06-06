@@ -2,7 +2,6 @@ package com.lisacbot.infrastructure.config;
 
 import com.lisacbot.domain.service.TradingService;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
@@ -17,18 +16,16 @@ import java.util.concurrent.ScheduledFuture;
 public class BotScheduler {
 
     private final TradingService tradingService;
+    private final ConfigurationService configurationService;
     private final TaskScheduler taskScheduler;
-
-    @Value("${bot.poll.interval.seconds}")
-    private int defaultPollIntervalSeconds;
 
     private int currentPollIntervalSeconds;
     private ScheduledFuture<?> scheduledTask;
 
-    public BotScheduler(TradingService tradingService) {
+    public BotScheduler(TradingService tradingService, ConfigurationService configurationService) {
         this.tradingService = tradingService;
+        this.configurationService = configurationService;
 
-        // Create a task scheduler
         ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
         scheduler.setPoolSize(1);
         scheduler.setThreadNamePrefix("bot-scheduler-");
@@ -38,8 +35,7 @@ public class BotScheduler {
 
     @PostConstruct
     public void initialize() {
-        // Start with the default interval from configuration
-        this.currentPollIntervalSeconds = defaultPollIntervalSeconds;
+        this.currentPollIntervalSeconds = configurationService.getPollIntervalSeconds();
         scheduleTask(currentPollIntervalSeconds);
     }
 
@@ -57,8 +53,8 @@ public class BotScheduler {
             scheduledTask.cancel(false);
         }
 
-        // Update the interval and schedule a new task
         this.currentPollIntervalSeconds = newIntervalSeconds;
+        configurationService.savePollIntervalSeconds(newIntervalSeconds);
         scheduleTask(newIntervalSeconds);
     }
 

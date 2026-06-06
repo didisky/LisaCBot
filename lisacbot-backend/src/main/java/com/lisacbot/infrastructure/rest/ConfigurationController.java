@@ -75,7 +75,8 @@ public class ConfigurationController {
     @GetMapping("/current")
     public ResponseEntity<Map<String, Object>> getCurrentConfiguration() {
         Map<String, Object> config = new java.util.HashMap<>();
-        config.put("pollIntervalSeconds", botScheduler.getCurrentPollInterval());
+        config.put("strategyType", configurationService.getStrategyType());
+        config.put("pollIntervalSeconds", configurationService.getPollIntervalSeconds());
         config.put("smaPeriod", configurationService.getSmaPeriod());
         config.put("emaPeriod", configurationService.getEmaPeriod());
         config.put("rsiPeriod", configurationService.getRsiPeriod());
@@ -86,9 +87,6 @@ public class ConfigurationController {
         config.put("macdSignalPeriod", configurationService.getMacdSignalPeriod());
         config.put("compositeBuyThreshold", configurationService.getCompositeBuyThreshold());
         config.put("compositeSellThreshold", configurationService.getCompositeSellThreshold());
-
-        // Add current strategy information
-        config.put("strategyName", tradingService.getStrategyName());
         config.put("strategyParameters", tradingService.getStrategyParameters());
 
         return ResponseEntity.ok(config);
@@ -111,6 +109,7 @@ public class ConfigurationController {
         try {
             TradingStrategy newStrategy = createStrategyByType(strategyType.toLowerCase());
             tradingService.updateStrategy(newStrategy, strategyType.toUpperCase());
+            configurationService.saveStrategyType(strategyType.toUpperCase());
 
             return ResponseEntity.ok(Map.of(
                     "success", true,

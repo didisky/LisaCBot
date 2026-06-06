@@ -117,7 +117,11 @@ export class StrategyConfigComponent implements OnInit {
     this.botService.getCurrentConfiguration().subscribe({
       next: (config) => {
         console.log('Current configuration received:', config);
-        // Update form input values
+        if (config.strategyType) {
+          this.config.type = config.strategyType;
+          this.activeStrategy = config.strategyType;
+          this.currentConfig.type = config.strategyType;
+        }
         this.config.pollIntervalSeconds = config.pollIntervalSeconds || this.config.pollIntervalSeconds;
         this.config.smaPeriod = config.smaPeriod || this.config.smaPeriod;
         this.config.emaPeriod = config.emaPeriod || this.config.emaPeriod;
@@ -130,7 +134,6 @@ export class StrategyConfigComponent implements OnInit {
         this.config.compositeBuyThreshold = config.compositeBuyThreshold ?? this.config.compositeBuyThreshold;
         this.config.compositeSellThreshold = config.compositeSellThreshold ?? this.config.compositeSellThreshold;
 
-        // Update current (actual) configuration values for display
         this.currentConfig.pollIntervalSeconds = config.pollIntervalSeconds || this.currentConfig.pollIntervalSeconds;
         this.currentConfig.smaPeriod = config.smaPeriod || this.currentConfig.smaPeriod;
         this.currentConfig.emaPeriod = config.emaPeriod || this.currentConfig.emaPeriod;
