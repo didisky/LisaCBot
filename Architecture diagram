@@ -1,0 +1,55 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           INFRASTRUCTURE                                    │
+│  (tout ce qui dépend d'une techno : HTTP, JPA, fichiers, Spring, JWT...)   │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────────────┐  │
+│  │                            DOMAINE                                   │  │
+│  │           (pur Java, aucune dépendance externe)                      │  │
+│  │                                                                      │  │
+│  │  ┌─────────────────┐   ┌──────────────────┐   ┌──────────────────┐  │  │
+│  │  │    SERVICES      │   │   STRATEGIES     │   │     MODELS       │  │  │
+│  │  │  TradingService  │   │  TradingStrategy │   │  Price  Signal   │  │  │
+│  │  │  BacktestService │   │  Composite       │   │  Trade  Portfolio│  │  │
+│  │  │  MarketCycle     │   │  EmaRsi  Macd    │   │  BotStatus       │  │  │
+│  │  │  Detector        │   │  SMA  LangGraph  │   │  TradeMetrics    │  │  │
+│  │  │  MetricsService  │   └──────────────────┘   │  BacktestResult  │  │  │
+│  │  │  TradeEvent      │                           │  MarketCycle     │  │  │
+│  │  │  Publisher       │   ┌──────────────────┐   │  TradeEvent      │  │  │
+│  │  │  Authentication  │   │     PORTS        │   └──────────────────┘  │  │
+│  │  │  Service         │   │  (interfaces)    │                          │  │
+│  │  └─────────────────┘   │  PriceProvider   │                          │  │
+│  │                         │  TradeRepository │                          │  │
+│  │                         │  PriceHistory    │                          │  │
+│  │                         │  Repository      │                          │  │
+│  │                         └────────┬─────────┘                          │  │
+│  └─────────────────────────────────┼──────────────────────────────────── ┘  │
+│                                    │                                        │
+│          ┌─────────────────────────┼──────────────────────────┐            │
+│          │                         │ implémentés par          │            │
+│          ▼                         ▼                          ▼            │
+│  ┌───────────────┐  ┌─────────────────────────┐  ┌──────────────────────┐ │
+│  │ rest/         │  │ persistence/             │  │ price/               │ │
+│  │ (Controllers) │  │ (Adapteurs sortants DB)  │  │ (Adapteurs prix)     │ │
+│  │               │  │                          │  │                      │ │
+│  │ AuthCtrl      │  │ TradeRepositoryAdapter   │  │ CoinGecko            │ │
+│  │ BotCtrl       │  │ PriceHistoryRepository   │  │ PriceAdapter         │ │
+│  │ StatusCtrl    │  │ Adapter                  │  │ (HTTP API)           │ │
+│  │ TradeCtrl     │  │                          │  │                      │ │
+│  │ BacktestCtrl  │  │ TradeEntity              │  │ CsvPriceAdapter      │ │
+│  │ ConfigCtrl    │  │ PriceHistoryEntity       │  │ (Fichier local)      │ │
+│  │ PriceHistory  │  │ JpaTradeRepository       │  │                      │ │
+│  │ Ctrl          │  │ JpaPriceHistoryRepo      │  └──────────┬───────────┘ │
+│  └───────┬───────┘  └────────────┬─────────────┘             │            │
+│          │                       │                            │            │
+│  ┌───────────────────────────────────────────────────────────────────────┐ │
+│  │ config/                                                               │ │
+│  │ SecurityConfig  CorsConfig  JwtFilter  ConfigurationService           │ │
+│  │ PriceHistoryCsvImporter  (Spring Security, JWT, démarrage)            │ │
+│  └───────────────────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────────────────── ┘
+         ▲                              ▲                        ▲
+         │                              │                        │
+  ┌──────┴──────┐               ┌───────┴───────┐      ┌────────┴────────┐
+  │   Angular   │               │  PostgreSQL   │      │  CoinGecko API  │
+  │  Frontend   │               │      DB       │      │  + CSV local    │
+  └─────────────┘               └───────────────┘      └─────────────────┘
