@@ -1,0 +1,93 @@
+.price-chart-panel {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.chart-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.period-selector {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.period-selector button {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  background: white;
+  color: #495057;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.period-selector button:hover {
+  background: #f0f4ff;
+  border-color: #4f8ef7;
+  color: #4f8ef7;
+}
+
+.period-selector button.active {
+  background: #4f8ef7;
+  border-color: #4f8ef7;
+  color: white;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.chart-container.hidden {
+  display: none;
+}
+
+.chart-state {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.chart-state.empty {
+  text-align: center;
+  line-height: 1.8;
+}
+
+@media (max-width: 768px) {
+  .price-chart-panel {
+    padding: 1rem;
+  }
+
+  .chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .chart-container {
+    height: 220px;
+  }
+
+  .chart-state {
+    height: 220px;
+  }
+}

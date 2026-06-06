@@ -1,0 +1,25 @@
+<div class="price-chart-panel">
+  <div class="chart-header">
+    <h3>Historique du Prix BTC</h3>
+    <div class="period-selector">
+      <button
+        *ngFor="let p of periods"
+        [class.active]="selectedHours === p.hours"
+        (click)="selectPeriod(p.hours)"
+      >
+        {{ p.label }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="chart-state">Chargement…</div>
+
+  <div *ngIf="!loading && !hasData" class="chart-state empty">
+    Aucune donnée pour cette période.<br />
+    <small>Démarrez le bot pour commencer à enregistrer les prix.</small>
+  </div>
+
+  <div class="chart-container" [class.hidden]="loading || !hasData">
+    <canvas baseChart [data]="chartData" [options]="chartOptions" type="line"></canvas>
+  </div>
+</div>

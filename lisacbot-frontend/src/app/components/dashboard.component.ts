@@ -7,6 +7,7 @@ import { Subscription } from 'rxjs';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
 import { trigger, state, style, transition, animate } from '@angular/animations';
+import { PriceHistoryChartComponent } from './price-history-chart/price-history-chart.component';
 
 // Register Chart.js components
 Chart.register(...registerables);
@@ -14,7 +15,7 @@ Chart.register(...registerables);
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, BaseChartDirective, PriceHistoryChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   animations: [

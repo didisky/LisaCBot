@@ -1,5 +1,6 @@
 package com.lisacbot.domain.service;
 
+import com.lisacbot.domain.port.PriceHistoryRepository;
 import com.lisacbot.domain.port.PriceProvider;
 import com.lisacbot.domain.port.TradeRepository;
 import com.lisacbot.domain.model.BotStatus;
@@ -33,6 +34,7 @@ public class TradingService {
     private TradingStrategy strategy; // Non-final to allow runtime strategy switching
     private final MarketCycleDetector cycleDetector;
     private final TradeRepository tradeRepository;
+    private final PriceHistoryRepository priceHistoryRepository;
     private final TradeEventPublisher tradeEventPublisher;
     private final Portfolio portfolio;
     private final boolean trailingStopLossEnabled;
@@ -53,6 +55,7 @@ public class TradingService {
             TradingStrategy strategy,
             MarketCycleDetector cycleDetector,
             TradeRepository tradeRepository,
+            PriceHistoryRepository priceHistoryRepository,
             TradeEventPublisher tradeEventPublisher,
             com.lisacbot.infrastructure.config.ConfigurationService configurationService,
             @Value("${bot.initial.balance}") double initialBalance,
@@ -68,6 +71,7 @@ public class TradingService {
         this.strategy = strategy;
         this.cycleDetector = cycleDetector;
         this.tradeRepository = tradeRepository;
+        this.priceHistoryRepository = priceHistoryRepository;
         this.tradeEventPublisher = tradeEventPublisher;
         this.configurationService = configurationService;
         this.portfolio = new Portfolio(initialBalance);
@@ -130,6 +134,7 @@ public class TradingService {
 
         try {
             lastPrice = priceProvider.getCurrentPrice();
+            priceHistoryRepository.save(lastPrice);
             executeTradingCycle(lastPrice.value());
         } catch (Exception e) {
             log.error("Error during trading cycle: {}", e.getMessage());

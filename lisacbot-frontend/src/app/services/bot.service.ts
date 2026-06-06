@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { BacktestResult } from '../models/backtest-result.model';
+import type { PriceEntry } from '../models/price.model';
 import { Trade } from '../models/trade.model';
 
 export interface BotStatus {
@@ -78,5 +79,11 @@ export class BotService {
 
   getCurrentConfiguration(): Observable<any> {
     return this.http.get(`${this.apiUrl}/config/current`);
+  }
+
+  getPricesByRange(start: Date, end: Date): Observable<PriceEntry[]> {
+    const startStr = start.toISOString().slice(0, 19);
+    const endStr = end.toISOString().slice(0, 19);
+    return this.http.get<PriceEntry[]>(`${this.apiUrl}/prices/range?start=${startStr}&end=${endStr}`);
   }
 }
