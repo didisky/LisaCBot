@@ -6,6 +6,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 @RestController
@@ -23,7 +25,10 @@ public class PriceHistoryController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
     ) {
-        return priceHistoryRepository.findByTimestampBetween(start, end);
+        ZoneId systemZone = ZoneId.systemDefault();
+        LocalDateTime localStart = start.atZone(ZoneOffset.UTC).withZoneSameInstant(systemZone).toLocalDateTime();
+        LocalDateTime localEnd = end.atZone(ZoneOffset.UTC).withZoneSameInstant(systemZone).toLocalDateTime();
+        return priceHistoryRepository.findByTimestampBetween(localStart, localEnd);
     }
 
     @GetMapping("/latest")

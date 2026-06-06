@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { Chart, ChartConfiguration, registerables } from 'chart.js';
@@ -22,7 +22,7 @@ interface Period {
   templateUrl: './price-history-chart.component.html',
   styleUrls: ['./price-history-chart.component.css'],
 })
-export class PriceHistoryChartComponent implements OnInit, OnDestroy {
+export class PriceHistoryChartComponent implements OnInit {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   periods: Period[] = [
@@ -85,17 +85,10 @@ export class PriceHistoryChartComponent implements OnInit, OnDestroy {
     },
   };
 
-  private refreshInterval?: ReturnType<typeof setInterval>;
-
   constructor(private botService: BotService, private cdr: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.loadData();
-    this.refreshInterval = setInterval(() => this.loadData(), 30_000);
-  }
-
-  ngOnDestroy() {
-    clearInterval(this.refreshInterval);
   }
 
   selectPeriod(hours: number) {

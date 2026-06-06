@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.util.List;
 
 /**
@@ -51,7 +53,10 @@ public class TradeController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime start,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end
     ) {
-        return tradeRepository.findByTimestampBetween(start, end);
+        ZoneId systemZone = ZoneId.systemDefault();
+        LocalDateTime localStart = start.atZone(ZoneOffset.UTC).withZoneSameInstant(systemZone).toLocalDateTime();
+        LocalDateTime localEnd = end.atZone(ZoneOffset.UTC).withZoneSameInstant(systemZone).toLocalDateTime();
+        return tradeRepository.findByTimestampBetween(localStart, localEnd);
     }
 
     /**
