@@ -1,6 +1,6 @@
 package com.lisacbot.domain.service;
 
-import com.lisacbot.domain.port.PriceProvider;
+import com.lisacbot.domain.port.PriceHistoryRepository;
 import com.lisacbot.domain.model.BacktestResult;
 import com.lisacbot.domain.model.MarketCycle;
 import com.lisacbot.domain.model.Portfolio;
@@ -24,7 +24,7 @@ import java.util.List;
 public class BacktestService {
     private static final Logger log = LoggerFactory.getLogger(BacktestService.class);
 
-    private final PriceProvider priceProvider;
+    private final PriceHistoryRepository priceHistoryRepository;
     private final TradingService tradingService;
     private final MarketCycleDetector cycleDetector;
 
@@ -35,11 +35,11 @@ public class BacktestService {
     private double defaultInitialBalance;
 
     public BacktestService(
-            PriceProvider priceProvider,
+            PriceHistoryRepository priceHistoryRepository,
             TradingService tradingService,
             MarketCycleDetector cycleDetector
     ) {
-        this.priceProvider = priceProvider;
+        this.priceHistoryRepository = priceHistoryRepository;
         this.tradingService = tradingService;
         this.cycleDetector = cycleDetector;
     }
@@ -51,8 +51,10 @@ public class BacktestService {
     public BacktestResult runBacktest(int days, double initialBalance) {
         log.info("Starting backtest for {} days with ${} initial balance", days, initialBalance);
 
-        List<Price> historicalPrices = priceProvider.getHistoricalPrices(days);
-        log.info("Retrieved {} historical price points from provider", historicalPrices.size());
+        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime start = end.minusDays(days);
+        List<Price> historicalPrices = priceHistoryRepository.findAllByTimestampBetween(start, end);
+        log.info("Retrieved {} historical price points from DB", historicalPrices.size());
 
         if (historicalPrices.isEmpty()) {
             log.error("No historical prices available for backtest!");

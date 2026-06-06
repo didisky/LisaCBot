@@ -40,6 +40,12 @@ public class PriceHistoryRepositoryAdapter implements PriceHistoryRepository {
     }
 
     @Override
+    public List<Price> findAllByTimestampBetween(LocalDateTime start, LocalDateTime end) {
+        return jpaRepository.findByTimestampBetweenOrderByTimestampAsc(start, end)
+                .stream().map(PriceHistoryEntity::toDomain).toList();
+    }
+
+    @Override
     public List<Price> findLatest(int limit) {
         return jpaRepository.findAllByOrderByTimestampDesc(PageRequest.of(0, limit))
                 .stream()

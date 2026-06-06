@@ -11,5 +11,7 @@ public interface PriceHistoryRepository {
 
     List<Price> findByTimestampBetween(LocalDateTime start, LocalDateTime end);
 
+    List<Price> findAllByTimestampBetween(LocalDateTime start, LocalDateTime end);
+
     List<Price> findLatest(int limit);
 }
