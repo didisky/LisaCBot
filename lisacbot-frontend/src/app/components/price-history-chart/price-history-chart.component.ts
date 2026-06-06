@@ -11,6 +11,8 @@ Chart.register(...registerables);
 interface Period {
   label: string;
   hours: number;
+  timeUnit: 'minute' | 'hour' | 'day' | 'week' | 'month';
+  tooltipFormat: string;
 }
 
 @Component({
@@ -24,10 +26,13 @@ export class PriceHistoryChartComponent implements OnInit, OnDestroy {
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
 
   periods: Period[] = [
-    { label: '1H', hours: 1 },
-    { label: '6H', hours: 6 },
-    { label: '24H', hours: 24 },
-    { label: '7J', hours: 168 },
+    { label: '1H',  hours: 1,    timeUnit: 'minute', tooltipFormat: 'HH:mm' },
+    { label: '6H',  hours: 6,    timeUnit: 'hour',   tooltipFormat: 'HH:mm' },
+    { label: '24H', hours: 24,   timeUnit: 'hour',   tooltipFormat: 'dd MMM HH:mm' },
+    { label: '7J',  hours: 168,  timeUnit: 'day',    tooltipFormat: 'dd MMM' },
+    { label: '1M',  hours: 720,  timeUnit: 'week',   tooltipFormat: 'dd MMM yyyy' },
+    { label: '6M',  hours: 4380, timeUnit: 'month',  tooltipFormat: 'MMM yyyy' },
+    { label: '1A',  hours: 8760, timeUnit: 'month',  tooltipFormat: 'MMM yyyy' },
   ];
   selectedHours = 24;
 
@@ -95,7 +100,34 @@ export class PriceHistoryChartComponent implements OnInit, OnDestroy {
 
   selectPeriod(hours: number) {
     this.selectedHours = hours;
+    this.updateChartTimeScale();
     this.loadData();
+  }
+
+  private updateChartTimeScale() {
+    const period = this.periods.find(p => p.hours === this.selectedHours)!;
+    this.chartOptions = {
+      ...this.chartOptions,
+      scales: {
+        ...this.chartOptions!['scales'],
+        x: {
+          type: 'time',
+          time: {
+            unit: period.timeUnit,
+            tooltipFormat: period.tooltipFormat,
+            displayFormats: {
+              minute: 'HH:mm',
+              hour: 'HH:mm',
+              day: 'dd MMM',
+              week: 'dd MMM',
+              month: 'MMM yyyy',
+            },
+          },
+          ticks: { maxTicksLimit: 8, color: '#6c757d' },
+          grid: { color: 'rgba(0,0,0,0.05)' },
+        },
+      },
+    };
   }
 
   loadData() {

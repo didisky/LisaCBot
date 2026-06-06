@@ -61,6 +61,10 @@ public class CsvPriceAdapter {
         }
     }
 
+    public List<Price> getAllPrices() {
+        return allPrices;
+    }
+
     /**
      * Returns the last {@code days} days of historical prices from the CSV.
      */
